@@ -14,7 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(path = "users")
 public class UserController {
-    private int generated_id = 1;
+    private int generatedId = 1;
     private final Map<Integer, User> users = new HashMap<>();
 
     @PostMapping()
@@ -84,6 +84,6 @@ public class UserController {
     }
 
     private int generateId() {
-        return generated_id++;
+        return generatedId++;
     }
 }

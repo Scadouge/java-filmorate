@@ -17,7 +17,7 @@ import java.util.Map;
 public class FilmController {
 
     private static final LocalDate MIN_FILM_RELEASE_DATE = LocalDate.of(1895, 12, 28);
-    private int generated_id = 1;
+    private int generatedId = 1;
     private final Map<Integer, Film> films = new HashMap<>();
 
     @PostMapping()
@@ -77,6 +77,6 @@ public class FilmController {
     }
 
     private int generateId() {
-        return generated_id++;
+        return generatedId++;
     }
 }
