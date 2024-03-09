@@ -8,12 +8,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
+@SuppressWarnings("unchecked")
 public abstract class AbstractStorage<T extends StorageItem> implements Storage<T> {
     protected long generatedId = 1;
     protected final Map<Long, T> storage = new HashMap<>();
 
     @Override
     public T put(T item) {
+        Long id = item.getId();
+        if (id == null) {
+            id = generateId();
+            item = (T) item.toBuilder().id(id).build();
+        }
         storage.put(item.getId(), item);
         return item;
     }

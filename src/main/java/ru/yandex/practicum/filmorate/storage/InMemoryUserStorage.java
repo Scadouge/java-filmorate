@@ -10,16 +10,6 @@ import java.util.stream.Collectors;
 public class InMemoryUserStorage extends AbstractStorage<User> implements UserStorage {
 
     @Override
-    public User put(User item) {
-        Long id = item.getId();
-        if (id == null) {
-            id = generateId();
-            item = item.toBuilder().id(id).build();
-        }
-        return super.put(item);
-    }
-
-    @Override
     public Collection<User> getFriends(Long id) {
         User user = storage.get(id);
         return user.getFriends().stream().map(storage::get).collect(Collectors.toList());

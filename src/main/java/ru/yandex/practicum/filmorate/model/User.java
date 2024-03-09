@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.experimental.NonFinal;
+import lombok.experimental.SuperBuilder;
 import ru.yandex.practicum.filmorate.validation.ValidLogin;
 
 import javax.validation.constraints.Email;
@@ -16,12 +17,10 @@ import java.util.Objects;
 import java.util.Set;
 
 @Value
-@Builder(toBuilder = true)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class User implements StorageItem {
+@SuperBuilder(toBuilder = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
+public class User extends StorageItem {
 
-    @EqualsAndHashCode.Include
-    Long id;
     @NotBlank
     @Email(message = "Неверный формат почты")
     String email;
@@ -36,6 +35,7 @@ public class User implements StorageItem {
     Set<Long> friends;
 
     public User(Long id, String email, String login, String name, LocalDate birthday, Set<Long> friends) {
+        super();
         this.id = id;
         this.email = email;
         this.login = login;

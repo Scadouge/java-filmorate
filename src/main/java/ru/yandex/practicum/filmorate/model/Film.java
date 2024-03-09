@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.experimental.SuperBuilder;
 import ru.yandex.practicum.filmorate.validation.ValidDate;
 
 import javax.validation.constraints.NotBlank;
@@ -15,11 +16,10 @@ import java.util.Objects;
 import java.util.Set;
 
 @Value
-@Builder(toBuilder = true)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Film implements StorageItem {
-    @EqualsAndHashCode.Include
-    Long id;
+@SuperBuilder(toBuilder = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
+public class Film extends StorageItem {
+
     @NotBlank
     String name;
     @NotBlank
@@ -35,6 +35,7 @@ public class Film implements StorageItem {
     Set<Long> likes;
 
     public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration, Set<Long> likes) {
+        super();
         this.id = id;
         this.name = name;
         this.description = description;
