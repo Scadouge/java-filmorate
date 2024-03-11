@@ -50,12 +50,4 @@ public abstract class AbstractService<S extends Storage<T>, T extends StorageIte
         log.info("Получение списка всех предметов");
         return storage.getAll();
     }
-
-    protected T getItemOrThrow(Long id) {
-        T film = storage.get(id);
-        if (film == null) {
-            throw new ItemNotFoundException(id);
-        }
-        return film;
-    }
 }

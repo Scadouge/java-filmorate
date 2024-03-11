@@ -22,7 +22,7 @@ public class FilmService extends AbstractService<FilmStorage, Film> {
 
     public Film updateLikes(Long id, Long userId, boolean isDeletion) {
         log.info("Обновление лайков id={}, userId={}, isDeletion={}", id, userId, isDeletion);
-        Film film = getItemOrThrow(id);
+        Film film = getItem(id);
         Film updatedFilm = updateFilmLikes(film, userId, isDeletion);
         storage.put(updatedFilm);
         return updatedFilm;

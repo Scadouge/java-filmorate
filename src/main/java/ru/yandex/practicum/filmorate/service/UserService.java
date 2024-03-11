@@ -19,8 +19,8 @@ public class UserService extends AbstractService<UserStorage, User> {
 
     public User updateFriends(Long id, Long friendId, boolean isDeletion) {
         log.info("Обновление списка друзей id={}, friendId={}, isDeletion={}", id, friendId, isDeletion);
-        User user = getItemOrThrow(id);
-        User friend = getItemOrThrow(friendId);
+        User user = getItem(id);
+        User friend = getItem(friendId);
         User updatedUser = updateUserFriends(user, friend, isDeletion);
         User updatedFriend = updateUserFriends(friend, user, isDeletion);
         storage.put(updatedUser);
@@ -40,7 +40,7 @@ public class UserService extends AbstractService<UserStorage, User> {
 
     public Collection<User> getFriends(Long id) {
         log.info("Получение списка друзей id={}", id);
-        User user = getItemOrThrow(id);
+        User user = getItem(id);
         return storage.getFriends(user.getId());
     }
 
