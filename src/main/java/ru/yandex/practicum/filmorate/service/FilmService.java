@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FilmService extends AbstractService<FilmStorage, Film> {
-    private final static Comparator<Film> FILM_COMPARATOR_SORT_BY_LIKES = Comparator.comparing(film -> film.getLikes().size(), Comparator.reverseOrder());
+    private static final Comparator<Film> FILM_COMPARATOR_SORT_BY_LIKES = Comparator.comparing(film -> film.getLikes().size(), Comparator.reverseOrder());
 
     public FilmService(FilmStorage storage) {
         super(storage);
