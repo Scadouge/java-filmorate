@@ -15,5 +15,5 @@ public abstract class StorageItem {
     }
 
     @EqualsAndHashCode.Include
-    Long id;
+    protected Long id;
 }
