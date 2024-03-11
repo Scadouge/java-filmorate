@@ -17,13 +17,4 @@ public class InMemoryUserStorage extends AbstractStorage<User> implements UserSt
         log.info("Получение списка друзей из хранилища id={}", id);
         return user.getFriends().stream().map(storage::get).collect(Collectors.toList());
     }
-
-    @Override
-    public Collection<User> getCommonFriends(Long id, Long otherId) {
-        User user = storage.get(id);
-        User other = storage.get(otherId);
-        return user.getFriends().stream()
-                .map(storage::get)
-                .filter(fid -> other.getFriends().contains(fid.getId())).collect(Collectors.toList());
-    }
 }

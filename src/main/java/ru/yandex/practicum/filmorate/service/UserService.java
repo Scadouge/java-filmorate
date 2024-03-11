@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -45,14 +46,8 @@ public class UserService extends AbstractService<UserStorage, User> {
 
     public Collection<User> getCommonFriends(Long id, Long otherId) {
         log.info("Получение списка общих друзей id={}, otherId={}", id, otherId);
-        User user = getItemOrThrow(id);
-        User other = getItemOrThrow(otherId);
-<<<<<<< Updated upstream
-        return storage.getCommonFriends(user.getId(), other.getId());
-=======
-        return user.getFriends().stream()
-                .map(storage::get)
-                .filter(fid -> other.getFriends().contains(fid.getId())).collect(Collectors.toList());
->>>>>>> Stashed changes
+        Collection<User> friends = storage.getFriends(id);
+        User other = getItem(otherId);
+        return friends.stream().filter(friend -> other.getFriends().contains(friend.getId())).collect(Collectors.toList());
     }
 }

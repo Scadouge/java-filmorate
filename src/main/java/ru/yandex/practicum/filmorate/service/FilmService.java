@@ -6,12 +6,16 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class FilmService extends AbstractService<FilmStorage, Film> {
+    private final static Comparator<Film> FILM_COMPARATOR_SORT_BY_LIKES = Comparator.comparing(film -> film.getLikes().size(), Comparator.reverseOrder());
+
     public FilmService(FilmStorage storage) {
         super(storage);
     }
@@ -35,14 +39,10 @@ public class FilmService extends AbstractService<FilmStorage, Film> {
     }
 
     public Collection<Film> getPopular(int count) {
-<<<<<<< Updated upstream
-        return storage.getPopular(count);
-=======
         log.info("Получение списка популярных фильмов count={}", count);
         return storage.getAll().stream()
-                .sorted(Comparator.comparing(film -> film.getLikes().size(), Comparator.reverseOrder()))
+                .sorted(FILM_COMPARATOR_SORT_BY_LIKES)
                 .limit(count)
                 .collect(Collectors.toList());
->>>>>>> Stashed changes
     }
 }
