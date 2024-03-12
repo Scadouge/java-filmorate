@@ -5,7 +5,6 @@ import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
 
 public class DateValidator implements ConstraintValidator<ValidDate, LocalDate> {
-
     private LocalDate targetDate;
     private Boolean isBefore;
 
