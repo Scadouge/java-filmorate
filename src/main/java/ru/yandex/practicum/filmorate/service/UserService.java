@@ -40,14 +40,18 @@ public class UserService extends AbstractService<UserStorage, User> {
 
     public Collection<User> getFriends(Long id) {
         log.info("Получение списка друзей id={}", id);
-        User user = getItem(id);
-        return storage.getFriends(user.getId());
+        return getFriendList(id);
     }
 
     public Collection<User> getCommonFriends(Long id, Long otherId) {
         log.info("Получение списка общих друзей id={}, otherId={}", id, otherId);
-        Collection<User> friends = storage.getFriends(id);
+        Collection<User> friends = getFriendList(id);
         User other = getItem(otherId);
         return friends.stream().filter(friend -> other.getFriends().contains(friend.getId())).collect(Collectors.toList());
+    }
+
+    private Collection<User> getFriendList(Long id) {
+        User user = storage.get(id);
+        return user.getFriends().stream().map(storage::get).collect(Collectors.toList());
     }
 }
