@@ -32,14 +32,19 @@ public class Film extends StorageItem {
     @Positive
     Integer duration;
     Set<Long> likes;
+    Set<Genre> genre;
+    Rating rating;
 
-    public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration, Set<Long> likes) {
+    public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration, Set<Long> likes,
+                Set<Genre> genre, Rating rating) {
         super();
+        this.rating = rating;
         this.id = id;
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
         this.likes = Objects.requireNonNullElseGet(likes, HashSet::new);
+        this.genre = Objects.requireNonNullElseGet(genre, HashSet::new);
     }
 }

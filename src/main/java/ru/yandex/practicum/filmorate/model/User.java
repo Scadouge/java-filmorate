@@ -11,9 +11,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PastOrPresent;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Value
 @SuperBuilder(toBuilder = true)
@@ -33,7 +31,8 @@ public class User extends StorageItem {
     LocalDate birthday;
     Set<Long> friends;
 
-    public User(Long id, String email, String login, String name, LocalDate birthday, Set<Long> friends) {
+    public User(Long id, String email, String login, String name, LocalDate birthday,
+                Set<Long> friends) {
         super();
         this.id = id;
         this.email = email;
