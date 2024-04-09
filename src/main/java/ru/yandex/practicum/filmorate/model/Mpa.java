@@ -9,8 +9,11 @@ import lombok.Value;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Genre {
+public class Mpa {
     @EqualsAndHashCode.Include
     Long id;
     String name;
+    String description;
+
+
 }

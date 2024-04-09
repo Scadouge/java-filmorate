@@ -1,8 +1,11 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 import ru.yandex.practicum.filmorate.validation.ValidDate;
 
 import javax.validation.constraints.NotBlank;
@@ -15,10 +18,12 @@ import java.util.Objects;
 import java.util.Set;
 
 @Value
+@Jacksonized
 @SuperBuilder(toBuilder = true)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class Film extends StorageItem {
-
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class Film {
+    @EqualsAndHashCode.Include
+    Long id;
     @NotBlank
     String name;
     @NotBlank
@@ -31,20 +36,20 @@ public class Film extends StorageItem {
     @NotNull
     @Positive
     Integer duration;
-    Set<Long> likes;
-    Set<Genre> genre;
-    Rating rating;
+    @NotNull
+    @NonFinal
+    @Builder.Default
+    Set<Genre> genres = new HashSet<>();
+    Mpa mpa;
 
-    public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration, Set<Long> likes,
-                Set<Genre> genre, Rating rating) {
-        super();
-        this.rating = rating;
+    public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration,
+                Set<Genre> genres, Mpa mpa) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
-        this.likes = Objects.requireNonNullElseGet(likes, HashSet::new);
-        this.genre = Objects.requireNonNullElseGet(genre, HashSet::new);
+        this.genres = Objects.requireNonNullElseGet(genres, HashSet::new);
+        this.mpa = mpa;
     }
 }

@@ -4,6 +4,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 import ru.yandex.practicum.filmorate.validation.ValidLogin;
 
 import javax.validation.constraints.Email;
@@ -11,13 +12,14 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PastOrPresent;
 import java.time.LocalDate;
-import java.util.*;
 
 @Value
+@Jacksonized
 @SuperBuilder(toBuilder = true)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class User extends StorageItem {
-
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class User {
+    @EqualsAndHashCode.Include
+    Long id;
     @NotBlank
     @Email(message = "Неверный формат почты")
     String email;
@@ -29,11 +31,8 @@ public class User extends StorageItem {
     @NotNull
     @PastOrPresent(message = "Дата рождения не может быть в будущем")
     LocalDate birthday;
-    Set<Long> friends;
 
-    public User(Long id, String email, String login, String name, LocalDate birthday,
-                Set<Long> friends) {
-        super();
+    public User(Long id, String email, String login, String name, LocalDate birthday) {
         this.id = id;
         this.email = email;
         this.login = login;
@@ -43,6 +42,7 @@ public class User extends StorageItem {
             this.name = name;
         }
         this.birthday = birthday;
-        this.friends = Objects.requireNonNullElseGet(friends, HashSet::new);
     }
 }
+
+

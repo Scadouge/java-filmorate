@@ -1,57 +1,71 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.UserStorage;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class UserService extends AbstractService<UserStorage, User> {
-    public UserService(UserStorage storage) {
-        super(storage);
+@AllArgsConstructor
+public class UserService {
+    @Qualifier("dbUserStorage")
+    private final UserStorage userStorage;
+
+    public User addUser(User user) {
+        log.info("Добавление пользователя user={}", user);
+        return userStorage.put(user);
     }
 
-    public User updateFriends(Long id, Long friendId, boolean isDeletion) {
-        log.info("Обновление списка друзей id={}, friendId={}, isDeletion={}", id, friendId, isDeletion);
-        User user = getItem(id);
-        User friend = getItem(friendId);
-        User updatedUser = updateUserFriends(user, friend, isDeletion);
-        User updatedFriend = updateUserFriends(friend, user, isDeletion);
-        storage.put(updatedUser);
-        storage.put(updatedFriend);
-        return updatedUser;
-    }
-
-    private User updateUserFriends(User user, User friend, boolean isDeletion) {
-        Set<Long> friends = new HashSet<>(user.getFriends());
-        if (isDeletion) {
-            friends.remove(friend.getId());
-        } else {
-            friends.add(friend.getId());
+    public User updateUser(User user) {
+        log.info("Обновление пользователя id={}, user={}", user.getId(), user);
+        if (user.getId() == null) {
+            throw new ValidationException("Не указан id пользователя");
         }
-        return user.toBuilder().friends(friends).build();
+        return userStorage.update(user);
+    }
+
+    public User getUser(Long id) {
+        log.info("Получение пользователя id={}", id);
+        return userStorage.get(id);
+    }
+
+    public Collection<User> getAllUsers() {
+        log.info("Получение списка всех пользователей");
+        return userStorage.getAll();
+    }
+
+    public User addFriend(Long userId, Long friendId) {
+        log.info("Отправка запроса в друзья userId={}, friendId={}", userId, friendId);
+        User user = getUser(userId);
+        User friend = getUser(friendId);
+        userStorage.addFriend(user, friend);
+        return user;
+    }
+
+    public User removeFriend(Long userId, Long friendId) {
+        log.info("Удаление из друзей userId={}, friendId={}", userId, friendId);
+        User user = getUser(userId);
+        User friend = getUser(friendId);
+        userStorage.removeFriend(user, friend);
+        return user;
     }
 
     public Collection<User> getFriends(Long id) {
         log.info("Получение списка друзей id={}", id);
-        return getFriendList(id);
+        return userStorage.getFriends(getUser(id));
     }
 
     public Collection<User> getCommonFriends(Long id, Long otherId) {
         log.info("Получение списка общих друзей id={}, otherId={}", id, otherId);
-        Collection<User> friends = getFriendList(id);
-        User other = getItem(otherId);
-        return friends.stream().filter(friend -> other.getFriends().contains(friend.getId())).collect(Collectors.toList());
-    }
-
-    private Collection<User> getFriendList(Long id) {
-        User user = storage.get(id);
-        return user.getFriends().stream().map(storage::get).collect(Collectors.toList());
+        Collection<User> userFriends = userStorage.getFriends(getUser(id));
+        Collection<User> friendFriends = userStorage.getFriends(getUser(otherId));
+        userFriends.retainAll(friendFriends);
+        return userFriends;
     }
 }
