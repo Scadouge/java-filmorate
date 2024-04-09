@@ -39,6 +39,7 @@ class DbUserStorageTest {
 
         assertEquals(1, collectionWithOneFriend.size());
         assertTrue(collectionWithOneFriend.contains(secondUser));
+        assertFalse(userStorage.getFriends(secondUser).contains(firstUser));
 
         userStorage.removeFriend(firstUser, secondUser);
         final Collection<User> collectionWithoutFriend = userStorage.getFriends(firstUser);
