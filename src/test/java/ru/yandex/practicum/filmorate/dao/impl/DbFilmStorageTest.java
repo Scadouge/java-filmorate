@@ -69,7 +69,7 @@ class DbFilmStorageTest {
             }
             genreCollection = genreStorage.getAll();
         }
-        
+
         Random random = new Random();
         return new Film(id, String.valueOf(random.nextInt(10000)), "Film desc",
                 LocalDate.of(2014, 10, random.nextInt(30) + 1),
