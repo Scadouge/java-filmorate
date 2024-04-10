@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
@@ -15,8 +14,8 @@ import java.util.Collection;
 @Service
 @AllArgsConstructor
 public class FilmService {
-    @Qualifier("dbFilmStorage") private final FilmStorage filmStorage;
-    @Qualifier("dbUserStorage") private final UserStorage userStorage;
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
 
     public Film addFilm(Film film) {
         log.info("Добавление фильма film={}", film);

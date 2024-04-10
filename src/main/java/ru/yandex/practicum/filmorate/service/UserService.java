@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -14,7 +13,6 @@ import java.util.Collection;
 @Service
 @AllArgsConstructor
 public class UserService {
-    @Qualifier("dbUserStorage")
     private final UserStorage userStorage;
 
     public User addUser(User user) {
