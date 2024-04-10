@@ -6,12 +6,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.GenreStorage;
+import ru.yandex.practicum.filmorate.dao.MpaStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import utils.TestGenreUtils;
 
+import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,10 +26,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class DbGenreStorageTest {
     private final JdbcTemplate jdbcTemplate;
     private GenreStorage genreStorage;
+    private FilmStorage filmStorage;
 
     @BeforeEach
     void setUp() {
         genreStorage = new DbGenreStorage(jdbcTemplate);
+        MpaStorage mpaStorage = new DbMpaStorage(jdbcTemplate);
+        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage);
     }
 
     @Test
@@ -71,6 +79,9 @@ class DbGenreStorageTest {
     @Test
     void testDeleteMpa() {
         final Genre newGenre = genreStorage.put(TestGenreUtils.getNewGenre());
+        filmStorage.put(new Film(null, "Film", "Desc",
+                LocalDate.of(2012, 12, 1),100, Set.of(newGenre), null));
+
         assertDoesNotThrow(() -> genreStorage.delete(newGenre));
         assertThrows(ItemNotFoundException.class, () -> genreStorage.get(newGenre.getId()));
     }

@@ -72,7 +72,6 @@ public class DbUserStorage implements UserStorage {
     @Override
     public User delete(User user) {
         log.info("Удаление пользователя из базы данных id={}", user.getId());
-        jdbcTemplate.update("DELETE FROM friendship WHERE user_id = ? OR friend_id = ?", user.getId(), user.getId());
         jdbcTemplate.update("DELETE FROM users WHERE user_id = ?", user.getId());
         return user;
     }
@@ -108,9 +107,9 @@ public class DbUserStorage implements UserStorage {
     @Override
     public Collection<User> getFriends(User user) {
         log.info("Получение списка друзей пользователя из базы данных id={}", user.getId());
-        return jdbcTemplate.query("SELECT friend_id FROM friendship WHERE user_id = ?",
-                (rs, rowNum) -> get(rs.getLong("friend_id")),
-                user.getId());
+        return jdbcTemplate.query("SELECT u.* FROM friendship AS fr " +
+                        "LEFT JOIN users AS u ON fr.friend_id = u.user_id WHERE fr.user_id = ?",
+                (rs, rowNum) -> createUser(rs), user.getId());
     }
 
     private User createUser(ResultSet rs) throws SQLException {

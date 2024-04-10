@@ -24,9 +24,9 @@ import utils.TestUserUtils;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,7 +74,7 @@ class DbFilmStorageTest {
         return new Film(id, String.valueOf(random.nextInt(10000)), "Film desc",
                 LocalDate.of(2014, 10, random.nextInt(30) + 1),
                 random.nextInt(30) + 1,
-                new HashSet<>(genreCollection), mpa);
+                genreCollection.stream().skip(new Random().nextInt(genreCollection.size())).collect(Collectors.toSet()), mpa);
     }
 
     @Test
@@ -152,6 +152,7 @@ class DbFilmStorageTest {
 
         final int likes = filmStorage.getLikes(newFilm);
 
+        assertEquals(0, filmStorage.getLikes(TestFilmUtils.getNonExistedFilm()));
         assertEquals(1, likes);
     }
 

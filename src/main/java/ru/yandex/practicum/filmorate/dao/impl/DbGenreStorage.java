@@ -71,7 +71,6 @@ public class DbGenreStorage implements GenreStorage {
     @Override
     public Genre delete(Genre genre) {
         log.info("Удаление жанра из базы данных id={}", genre.getId());
-        jdbcTemplate.update("DELETE FROM film_genre WHERE genre_id = ?", genre.getId());
         jdbcTemplate.update("DELETE FROM genre WHERE genre_id = ?", genre.getId());
         return genre;
     }
