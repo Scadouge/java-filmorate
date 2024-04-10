@@ -47,7 +47,7 @@ public class DbFilmStorage implements FilmStorage {
         if (keyHolder.getKey() == null) {
             throw new DbStorageException("Сгенерированный ключ пользователя = null");
         }
-        Long filmId = (long) (int) keyHolder.getKey();
+        Long filmId = keyHolder.getKey().longValue();
         Film updatedFilm = film.toBuilder().id(filmId).build();
         setMpa(updatedFilm);
         setGenres(updatedFilm);

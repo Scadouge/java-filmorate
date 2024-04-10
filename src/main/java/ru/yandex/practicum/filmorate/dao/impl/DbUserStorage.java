@@ -39,7 +39,7 @@ public class DbUserStorage implements UserStorage {
         if (keyHolder.getKey() == null) {
             throw new DbStorageException("Сгенерированный ключ пользователя = null");
         }
-        Long key = (long) (int) keyHolder.getKey();
+        Long key = keyHolder.getKey().longValue();
         return user.toBuilder().id(key).build();
     }
 
