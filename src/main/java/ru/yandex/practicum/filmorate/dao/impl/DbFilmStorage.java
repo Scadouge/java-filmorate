@@ -67,7 +67,7 @@ public class DbFilmStorage implements FilmStorage {
             if (film == null) {
                 throw new ItemNotFoundException(id);
             }
-            Map<Long, Set<Genre>> genreMapping = getGenres(Set.of(id));
+            Map<Long, Set<Genre>> genreMapping = getFilmGenreMapping(Set.of(id));
             if (genreMapping.containsKey(id)) {
                 return film.toBuilder().genres(genreMapping.get(id).stream()
                         .sorted(Comparator.comparing(Genre::getId)) // для прохождения тестов
@@ -86,7 +86,7 @@ public class DbFilmStorage implements FilmStorage {
         String sql = "SELECT f.*,m.name AS mpa_name,m.description AS mpa_description " +
                 "FROM films AS f " +
                 "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id";
-        Map<Long, Set<Genre>> genres = getGenres();
+        Map<Long, Set<Genre>> genres = getFilmGenreMapping();
         return jdbcTemplate.query(sql,
                 (rs, roNum) -> createFilm(rs, genres.get(rs.getLong("film_id"))));
     }
@@ -133,7 +133,8 @@ public class DbFilmStorage implements FilmStorage {
                 "GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT ?) AS CL ON CL.film_id= f.film_id " +
                 "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id";
         List<Film> filmsWithoutGenres = jdbcTemplate.query(sql, (rs, roNum) -> createFilm(rs), count);
-        Map<Long, Set<Genre>> genres = getGenres(filmsWithoutGenres.stream().map(Film::getId).collect(Collectors.toSet()));
+        Map<Long, Set<Genre>> genres = getFilmGenreMapping(filmsWithoutGenres.stream().map(Film::getId)
+                .collect(Collectors.toSet()));
         return filmsWithoutGenres.stream()
                 .map(film -> film.toBuilder().genres(genres.get(film.getId())).build())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -181,15 +182,15 @@ public class DbFilmStorage implements FilmStorage {
         );
     }
 
-    private Map<Long, Set<Genre>> getGenres(Set<Long> filmIds) {
-        return getGenres(filmIds, false);
+    private Map<Long, Set<Genre>> getFilmGenreMapping(Set<Long> filmIds) {
+        return getFilmGenreMapping(filmIds, false);
     }
 
-    private Map<Long, Set<Genre>> getGenres() {
-        return getGenres(Set.of(), true);
+    private Map<Long, Set<Genre>> getFilmGenreMapping() {
+        return getFilmGenreMapping(Set.of(), true);
     }
 
-    private Map<Long, Set<Genre>> getGenres(Set<Long> filmIds, boolean selectAll) {
+    private Map<Long, Set<Genre>> getFilmGenreMapping(Set<Long> filmIds, boolean selectAll) {
         Map<Long, Genre> genres = new HashMap<>();
         Map<Long, Set<Genre>> genreMapping = new HashMap<>();
         if (filmIds.isEmpty() && !selectAll) {
