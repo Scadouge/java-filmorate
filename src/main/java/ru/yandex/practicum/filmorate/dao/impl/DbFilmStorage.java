@@ -86,18 +86,9 @@ public class DbFilmStorage implements FilmStorage {
         String sql = "SELECT f.*,m.name AS mpa_name,m.description AS mpa_description " +
                 "FROM films AS f " +
                 "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id";
-        List<Film> filmsWithoutGenres = jdbcTemplate.query(sql, (rs, roNum) -> createFilm(rs));
-        Map<Long, Set<Genre>> genres = getGenres(filmsWithoutGenres.stream().map(Film::getId).collect(Collectors.toSet()));
-        return filmsWithoutGenres.stream()
-                .map(film -> {
-                    if (genres.containsKey(film.getId())) {
-                        return film.toBuilder().genres(genres.get(film.getId())).build();
-                    } else {
-                        return film;
-                    }
-                })
-                .sorted(Comparator.comparing(Film::getId)) // для прохождения тестов
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<Long, Set<Genre>> genres = getGenres();
+        return jdbcTemplate.query(sql,
+                (rs, roNum) -> createFilm(rs, genres.get(rs.getLong("film_id"))));
     }
 
     @Override
@@ -191,14 +182,22 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     private Map<Long, Set<Genre>> getGenres(Set<Long> filmIds) {
+        return getGenres(filmIds, false);
+    }
+
+    private Map<Long, Set<Genre>> getGenres() {
+        return getGenres(Set.of(), true);
+    }
+
+    private Map<Long, Set<Genre>> getGenres(Set<Long> filmIds, boolean selectAll) {
         Map<Long, Genre> genres = new HashMap<>();
         Map<Long, Set<Genre>> genreMapping = new HashMap<>();
-        if (filmIds.isEmpty()) {
+        if (filmIds.isEmpty() && !selectAll) {
             return genreMapping;
         }
         String sql = "SELECT fg.*, g.name AS genre_name FROM film_genre AS fg " +
                 "LEFT JOIN genre AS g ON g.genre_id = fg.genre_id " +
-                "WHERE fg.film_id IN (" +
+                "WHERE " + selectAll + " OR fg.film_id IN (" +
                 String.join(",", filmIds.stream().map(String::valueOf).collect(Collectors.toSet())) + ")";
         jdbcTemplate.query(sql,
                 (rs, rowNum) -> {
@@ -220,6 +219,21 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     private Film createFilm(ResultSet rs) throws SQLException {
+        return createFilm(rs, null);
+    }
+
+    private Film createFilm(ResultSet rs, Set<Genre> genres) throws SQLException {
+        if (genres == null) {
+            genres = Set.of();
+        }
+        long mpaId = rs.getLong("mpa_id");
+        Mpa mpa = null;
+        if (mpaId != 0) {
+            mpa = Mpa.builder()
+                    .id(mpaId)
+                    .name(rs.getString("mpa_name"))
+                    .description(rs.getString("mpa_description")).build();
+        }
         Long filmId = rs.getLong("film_id");
         return Film.builder()
                 .id(filmId)
@@ -227,10 +241,8 @@ public class DbFilmStorage implements FilmStorage {
                 .description(rs.getString("description"))
                 .duration(rs.getInt("duration"))
                 .releaseDate(rs.getDate("release_date").toLocalDate())
-                .mpa(Mpa.builder()
-                        .id(rs.getLong("mpa_id"))
-                        .name(rs.getString("mpa_name"))
-                        .description(rs.getString("mpa_description")).build())
+                .mpa(mpa)
+                .genres(genres)
                 .build();
     }
 }

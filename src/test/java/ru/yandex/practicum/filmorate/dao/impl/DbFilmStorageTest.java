@@ -90,10 +90,13 @@ class DbFilmStorageTest {
 
     @Test
     void testGetFilmById() {
-        Film newFilm = getNewFilmWithRandomMpaAndGenres();
-        final Long newFilmId = filmStorage.put(newFilm).getId();
-        newFilm = newFilm.toBuilder().id(newFilmId).build();
-        final Film savedFilm = filmStorage.get(newFilmId);
+        final Film newFilm = filmStorage.put(getNewFilmWithRandomMpaAndGenres());
+        final Film savedFilm = filmStorage.get(newFilm.getId());
+        final Film newFilmWithoutMpa = filmStorage.put(getNewFilmWithRandomMpaAndGenres()
+                .toBuilder().genres(Set.of()).mpa(null).build());
+
+        assertTrue(newFilmWithoutMpa.getGenres().isEmpty());
+        assertNull(newFilmWithoutMpa.getMpa());
 
         assertThat(savedFilm)
                 .isNotNull()
