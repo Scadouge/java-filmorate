@@ -3,8 +3,8 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.FilmStorage;
-import ru.yandex.practicum.filmorate.dao.UserStorage;
+import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
+import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
@@ -23,7 +23,7 @@ public class FilmService {
     }
 
     public Film updateFilm(Film film) {
-        log.info("Обновление фильма id={}, film={}", film.getId(), film);
+        log.info("Обновление фильма film={}", film);
         if (film.getId() == null) {
             throw new ValidationException("Не указан id фильма");
         }

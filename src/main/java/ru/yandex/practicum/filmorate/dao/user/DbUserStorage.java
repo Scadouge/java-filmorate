@@ -1,21 +1,20 @@
-package ru.yandex.practicum.filmorate.dao.impl;
+package ru.yandex.practicum.filmorate.dao.user;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dao.UserStorage;
-import ru.yandex.practicum.filmorate.exception.DbStorageException;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.sql.*;
+import java.sql.Date;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Repository
@@ -25,30 +24,26 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public User put(User user) {
-        log.info("Добавление пользователя в базу данных user={}", user);
-        String sql = "INSERT INTO users (name, login, email, birthday) VALUES (?, ?, ?, ?)";
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, user.getName());
-            ps.setString(2, user.getLogin());
-            ps.setString(3, user.getEmail());
-            ps.setDate(4, Date.valueOf(user.getBirthday()));
-            return ps;
-        }, keyHolder);
-        if (keyHolder.getKey() == null) {
-            throw new DbStorageException("Сгенерированный ключ пользователя = null");
-        }
-        Long key = keyHolder.getKey().longValue();
-        return user.toBuilder().id(key).build();
+        SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
+        jdbcInsert.withTableName("users");
+        jdbcInsert.usingGeneratedKeyColumns("user_id");
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", user.getName());
+        params.put("login", user.getLogin());
+        params.put("email", user.getEmail());
+        params.put("birthday", Date.valueOf(user.getBirthday()));
+        long id = jdbcInsert.executeAndReturnKey(params).longValue();
+        User updatedUser = user.toBuilder().id(id).build();
+        log.info("Добавление пользователя user={}", updatedUser);
+        return updatedUser;
     }
 
     @Override
     public User get(Long id) {
-        log.info("Получение пользователя из базы данных id={}", id);
+        log.info("Получение пользователя id={}", id);
         String sql = "SELECT * FROM users WHERE user_id = ?";
         try {
-            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> createUser(rs), id);
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> UserMapper.createUser(rs), id);
         } catch (EmptyResultDataAccessException e) {
             throw new ItemNotFoundException(id);
         }
@@ -56,29 +51,29 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public Collection<User> getAll() {
-        log.info("Получение всех пользователей из базы данных");
+        log.info("Получение всех пользователей");
         String sql = "SELECT * FROM users";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> createUser(rs));
+        return jdbcTemplate.query(sql, (rs, rowNum) -> UserMapper.createUser(rs));
     }
 
     @Override
-    public User update(User item) {
-        log.info("Обновление пользователя в базе данных");
+    public User update(User user) {
+        log.info("Обновление пользователя user={}", user);
         String sql = "UPDATE users SET name = ?, login = ?, email = ?, birthday = ? WHERE user_id = ?";
-        jdbcTemplate.update(sql, item.getName(), item.getLogin(), item.getEmail(), item.getBirthday(), item.getId());
-        return get(item.getId());
+        jdbcTemplate.update(sql, user.getName(), user.getLogin(), user.getEmail(), user.getBirthday(), user.getId());
+        return get(user.getId());
     }
 
     @Override
     public User delete(User user) {
-        log.info("Удаление пользователя из базы данных id={}", user.getId());
+        log.info("Удаление пользователя id={}", user.getId());
         jdbcTemplate.update("DELETE FROM users WHERE user_id = ?", user.getId());
         return user;
     }
 
     @Override
     public void addFriend(User user, User friend) {
-        log.info("Добавление дружбы в базу данных userId={}, friendId={}", user.getId(), friend.getId());
+        log.info("Добавление дружбы userId={}, friendId={}", user.getId(), friend.getId());
         String sqlGetFriendship = "SELECT * FROM friendship WHERE user_id = ? AND friend_id = ?";
         SqlRowSet userFriendship = jdbcTemplate.queryForRowSet(sqlGetFriendship, user.getId(), friend.getId());
         SqlRowSet friendFriendship = jdbcTemplate.queryForRowSet(sqlGetFriendship, friend.getId(), user.getId());
@@ -95,7 +90,7 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public void removeFriend(User user, User friend) {
-        log.info("Удаление дружбы из базы данных userId={}, friendId={}", user.getId(), friend.getId());
+        log.info("Удаление дружбы userId={}, friendId={}", user.getId(), friend.getId());
         int updated = jdbcTemplate.update("DELETE FROM friendship WHERE user_id = ? AND friend_id = ?",
                 user.getId(), friend.getId());
         if (updated > 0) {
@@ -106,19 +101,9 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public Collection<User> getFriends(User user) {
-        log.info("Получение списка друзей пользователя из базы данных id={}", user.getId());
+        log.info("Получение списка друзей пользователя id={}", user.getId());
         return jdbcTemplate.query("SELECT u.* FROM friendship AS fr " +
                         "LEFT JOIN users AS u ON fr.friend_id = u.user_id WHERE fr.user_id = ?",
-                (rs, rowNum) -> createUser(rs), user.getId());
-    }
-
-    private User createUser(ResultSet rs) throws SQLException {
-        return User.builder()
-                    .id(rs.getLong("user_id"))
-                    .name(rs.getString("name"))
-                    .login(rs.getString("login"))
-                    .email(rs.getString("email"))
-                    .birthday(rs.getDate("birthday").toLocalDate())
-                    .build();
+                (rs, rowNum) -> UserMapper.createUser(rs), user.getId());
     }
 }

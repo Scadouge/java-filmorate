@@ -1,5 +1,6 @@
-package ru.yandex.practicum.filmorate.dao;
+package ru.yandex.practicum.filmorate.dao.user;
 
+import ru.yandex.practicum.filmorate.dao.CrudStorage;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;

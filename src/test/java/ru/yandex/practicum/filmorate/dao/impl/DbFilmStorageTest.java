@@ -7,10 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.FilmStorage;
-import ru.yandex.practicum.filmorate.dao.GenreStorage;
-import ru.yandex.practicum.filmorate.dao.MpaStorage;
-import ru.yandex.practicum.filmorate.dao.UserStorage;
+import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
+import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
+import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
+import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
+import ru.yandex.practicum.filmorate.dao.mpa.DbMpaStorage;
+import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
+import ru.yandex.practicum.filmorate.dao.user.DbUserStorage;
+import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -153,9 +157,9 @@ class DbFilmStorageTest {
                 () -> filmStorage.addLike(TestFilmUtils.getNonExistedFilm(), newUser));
         assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
 
-        final int likes = filmStorage.getLikes(newFilm);
+        final int likes = filmStorage.getLikesCount(newFilm);
 
-        assertEquals(0, filmStorage.getLikes(TestFilmUtils.getNonExistedFilm()));
+        assertEquals(0, filmStorage.getLikesCount(TestFilmUtils.getNonExistedFilm()));
         assertEquals(1, likes);
     }
 
@@ -166,13 +170,13 @@ class DbFilmStorageTest {
 
         filmStorage.addLike(newFilm, newUser);
 
-        assertEquals(1, filmStorage.getLikes(newFilm));
+        assertEquals(1, filmStorage.getLikesCount(newFilm));
         assertDoesNotThrow(() -> filmStorage.removeLike(newFilm, TestUserUtils.getNewNonExistentUser()));
-        assertEquals(1, filmStorage.getLikes(newFilm));
+        assertEquals(1, filmStorage.getLikesCount(newFilm));
 
         filmStorage.removeLike(newFilm, newUser);
 
-        assertEquals(0, filmStorage.getLikes(newFilm));
+        assertEquals(0, filmStorage.getLikesCount(newFilm));
         assertDoesNotThrow(() -> filmStorage.removeLike(TestFilmUtils.getNonExistedFilm(), newUser));
     }
 
