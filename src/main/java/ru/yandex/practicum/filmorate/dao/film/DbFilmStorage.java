@@ -136,9 +136,9 @@ public class DbFilmStorage implements FilmStorage {
         log.info("Получение списка популярных фильмов count={}", count);
         String sql = "SELECT f.*,m.name AS mpa_name,m.description AS mpa_description " +
                 "FROM films AS f " +
-                "JOIN (SELECT film_id FROM likes GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT ?) " +
+                "RIGHT JOIN (SELECT film_id FROM likes GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT ?) " +
                     "AS CL ON CL.film_id= f.film_id " +
-                "JOIN mpa AS m ON f.mpa_id = m.mpa_id";
+                "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id";
         List<Film> filmsWithoutGenres = jdbcTemplate.query(sql, (rs, rowNum) -> FilmMapper.createFilm(rs), count);
         Map<Long, Set<Genre>> genresMapping = getFilmGenreMapping(filmsWithoutGenres.stream().map(Film::getId)
                 .collect(Collectors.toSet()));

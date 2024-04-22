@@ -27,9 +27,7 @@ import utils.TestMpaUtils;
 import utils.TestUserUtils;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -188,7 +186,7 @@ class DbFilmStorageTest {
     void testGetPopularByLikes() {
         Film firstFilm = getNewFilmWithRandomMpaAndGenres();
         firstFilm = filmStorage.put(firstFilm);
-        Film secondFilm = getNewFilmWithRandomMpaAndGenres();
+        Film secondFilm = getNewFilmWithRandomMpaAndGenres().toBuilder().mpa(null).build();
         secondFilm = filmStorage.put(secondFilm);
         final User firstUser = userStorage.put(TestUserUtils.getNewUser());
         final User secondUser = userStorage.put(TestUserUtils.getNewUser());
@@ -203,7 +201,13 @@ class DbFilmStorageTest {
         assertTrue(popularByLikesMaxOne.contains(secondFilm));
 
         Collection<Film> popularByLikes = filmStorage.getPopularByLikes(10);
+        Optional<Film> mostPopularFilm = popularByLikes.stream().findFirst();
+        Optional<Film> almostPopularFilm = popularByLikes.stream().skip(1).findFirst();
 
+        assertTrue(mostPopularFilm.isPresent());
+        assertTrue(almostPopularFilm.isPresent());
+        assertEquals(secondFilm, mostPopularFilm.get());
+        assertEquals(firstFilm, almostPopularFilm.get());
         assertEquals(2, popularByLikes.size());
     }
 }
