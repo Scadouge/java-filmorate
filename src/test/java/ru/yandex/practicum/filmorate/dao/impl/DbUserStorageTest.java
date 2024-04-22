@@ -33,6 +33,7 @@ class DbUserStorageTest {
         final User firstUser = userStorage.put(TestUserUtils.getNewUser());
         final User secondUser = userStorage.put(TestUserUtils.getNewUser());
 
+        assertEquals(firstUser.getName(), firstUser.getLogin());
         assertEquals(0, userStorage.getFriends(firstUser).size());
 
         userStorage.addFriend(firstUser, secondUser);

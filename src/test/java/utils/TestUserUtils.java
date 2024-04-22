@@ -8,11 +8,11 @@ import java.util.Random;
 public class TestUserUtils {
     public static User getNewUser(Long id) {
         Random random = new Random();
-        return new User(id,
-                random.nextInt(10000) + "@email.ru",
-                "vanya" + random.nextInt(10000),
-                "Name " + random.nextInt(10000),
-                LocalDate.of(1990, 1, random.nextInt(30) + 1));
+        return User.builder()
+                .id(id)
+                .email(random.nextInt(10000) + "@email.ru")
+                .login("vanya" + random.nextInt(10000))
+                .birthday(LocalDate.of(1990, 1, random.nextInt(30) + 1)).build();
     }
 
     public static User getNewUser() {

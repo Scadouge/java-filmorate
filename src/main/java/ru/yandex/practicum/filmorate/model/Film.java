@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.experimental.NonFinal;
-import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 import ru.yandex.practicum.filmorate.validation.ValidDate;
 
@@ -19,7 +18,7 @@ import java.util.Set;
 
 @Value
 @Jacksonized
-@SuperBuilder(toBuilder = true)
+@Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Film {
     @EqualsAndHashCode.Include

@@ -1,9 +1,9 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.experimental.NonFinal;
-import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 import ru.yandex.practicum.filmorate.validation.ValidLogin;
 
@@ -15,7 +15,7 @@ import java.time.LocalDate;
 
 @Value
 @Jacksonized
-@SuperBuilder(toBuilder = true)
+@Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
     @EqualsAndHashCode.Include
