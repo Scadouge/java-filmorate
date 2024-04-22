@@ -75,10 +75,14 @@ class DbFilmStorageTest {
         }
 
         Random random = new Random();
-        return new Film(id, String.valueOf(random.nextInt(10000)), "Film desc",
-                LocalDate.of(2014, 10, random.nextInt(30) + 1),
-                random.nextInt(30) + 1,
-                genreCollection.stream().skip(new Random().nextInt(genreCollection.size())).collect(Collectors.toSet()), mpa);
+        return Film.builder()
+                .id(id)
+                .name(String.valueOf(random.nextInt(10000)))
+                .description("Film desc")
+                .releaseDate(LocalDate.of(2014, 10, random.nextInt(30) + 1))
+                .duration(random.nextInt(30) + 1)
+                .genres(genreCollection.stream().skip(new Random().nextInt(genreCollection.size())).collect(Collectors.toSet()))
+                .mpa(mpa).build();
     }
 
     @Test

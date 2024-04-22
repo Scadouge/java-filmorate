@@ -14,6 +14,4 @@ public class Mpa {
     Long id;
     String name;
     String description;
-
-
 }

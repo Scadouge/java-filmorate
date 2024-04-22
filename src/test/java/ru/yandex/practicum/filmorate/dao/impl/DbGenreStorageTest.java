@@ -82,8 +82,14 @@ class DbGenreStorageTest {
     @Test
     void testDeleteMpa() {
         final Genre newGenre = genreStorage.put(TestGenreUtils.getNewGenre());
-        filmStorage.put(new Film(null, "Film", "Desc",
-                LocalDate.of(2012, 12, 1),100, Set.of(newGenre), null));
+        final Film newFilm = Film.builder()
+                .name("Film")
+                .description("Desc")
+                .releaseDate(LocalDate.of(2012, 12, 1))
+                .duration(100)
+                .genres(Set.of(newGenre))
+                .build();
+        filmStorage.put(newFilm);
 
         assertDoesNotThrow(() -> genreStorage.delete(newGenre));
         assertThrows(ItemNotFoundException.class, () -> genreStorage.get(newGenre.getId()));

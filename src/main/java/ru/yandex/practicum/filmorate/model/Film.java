@@ -41,7 +41,7 @@ public class Film {
     Set<Genre> genres = new HashSet<>();
     Mpa mpa;
 
-    public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration,
+    private Film(Long id, String name, String description, LocalDate releaseDate, Integer duration,
                 Set<Genre> genres, Mpa mpa) {
         this.id = id;
         this.name = name;
