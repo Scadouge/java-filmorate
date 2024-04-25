@@ -78,11 +78,10 @@ public class DbUserStorage implements UserStorage {
         Integer userFriendListSize = Objects.requireNonNullElse(jdbcTemplate.queryForObject(sqlGetFriendship,
                 (rs, rowNum) -> rs.getInt("count"),
                 user.getId(), friend.getId()), 0);
-        Integer friendFriendListSize = Objects.requireNonNullElse(jdbcTemplate.queryForObject(sqlGetFriendship,
-                (rs, rowNum) -> rs.getInt("count"),
-                friend.getId(), user.getId()), 0);
-
         if (userFriendListSize == 0) {
+            Integer friendFriendListSize = Objects.requireNonNullElse(jdbcTemplate.queryForObject(sqlGetFriendship,
+                    (rs, rowNum) -> rs.getInt("count"),
+                    friend.getId(), user.getId()), 0);
             String status = FriendshipStatus.UNACCEPTED.toString();
             if (friendFriendListSize > 0) {
                 status = FriendshipStatus.ACCEPTED.toString();

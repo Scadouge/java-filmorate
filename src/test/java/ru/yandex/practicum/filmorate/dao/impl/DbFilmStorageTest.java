@@ -27,7 +27,10 @@ import utils.TestMpaUtils;
 import utils.TestUserUtils;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -157,6 +160,8 @@ class DbFilmStorageTest {
 
         assertThrows(DataIntegrityViolationException.class,
                 () -> filmStorage.addLike(TestFilmUtils.getNonExistedFilm(), newUser));
+        assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
+        assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
         assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
 
         final int likes = filmStorage.getLikesCount(newFilm);

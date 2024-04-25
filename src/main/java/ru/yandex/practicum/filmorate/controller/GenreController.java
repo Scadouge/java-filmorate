@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.GenreService;
 
+import javax.validation.Valid;
 import java.util.Collection;
 
 @Slf4j
@@ -25,7 +26,7 @@ public class GenreController {
     }
 
     @GetMapping("/{id}")
-    public Genre getGenre(@PathVariable Long id) {
+    public Genre getGenre(@Valid @PathVariable Long id) {
         log.info("Получение жанра id={}", id);
         return genreService.getGenre(id);
     }

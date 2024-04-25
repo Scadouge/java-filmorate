@@ -40,6 +40,9 @@ class DbUserStorageTest {
         assertEquals(0, userStorage.getFriends(firstUser).size());
 
         userStorage.addFriend(firstUser, secondUser);
+        userStorage.addFriend(firstUser, secondUser);
+        userStorage.addFriend(firstUser, secondUser);
+        userStorage.addFriend(firstUser, secondUser);
         final Collection<User> friendListWithOneFriend = userStorage.getFriends(firstUser);
         final FriendshipStatus firstToSecondFriendshipStatus = FriendshipStatus.valueOf(Objects.requireNonNull(
                 jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",

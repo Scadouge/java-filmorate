@@ -120,8 +120,7 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public void addLike(Film film, User user) {
         log.info("Добавление лайка filmId={}, userId={}", film.getId(), user.getId());
-        jdbcTemplate.update("INSERT INTO likes (film_id, user_id) VALUES (?, ?)",
-                film.getId(), user.getId());
+        jdbcTemplate.update("MERGE INTO likes KEY(film_id, user_id) VALUES (?, ?)", film.getId(), user.getId());
     }
 
     @Override

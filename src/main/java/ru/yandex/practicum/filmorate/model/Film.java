@@ -6,6 +6,7 @@ import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 import ru.yandex.practicum.filmorate.validation.ValidDate;
+import ru.yandex.practicum.filmorate.validation.ValidGenres;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -13,7 +14,6 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @Value
@@ -23,32 +23,21 @@ import java.util.Set;
 public class Film {
     @EqualsAndHashCode.Include
     Long id;
-    @NotBlank
+    @NotBlank(message = "Название не может отсутствовать")
     String name;
-    @NotBlank
+    @NotBlank(message = "Описание не может отсутствовать")
     @Size(max = 200, message = "Длина описания не должна превышать 200 символов.")
     String description;
-    @NotNull
+    @NotNull(message = "Дата релиза не может отсутствовать")
     @ValidDate(targetDate = "1895-12-28", isBefore = false,
             message = "Дата релиза должна быть не раньше 28 декабря 1895 года")
     LocalDate releaseDate;
-    @NotNull
-    @Positive
+    @NotNull(message = "Продолжительность не может отсутствовать")
+    @Positive(message = "Продолжительность должна быть положительной")
     Integer duration;
-    @NotNull
+    @ValidGenres(message = "У жанра отсутствует id")
     @NonFinal
     @Builder.Default
     Set<Genre> genres = new HashSet<>();
     Mpa mpa;
-
-    private Film(Long id, String name, String description, LocalDate releaseDate, Integer duration,
-                Set<Genre> genres, Mpa mpa) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-        this.genres = Objects.requireNonNullElseGet(genres, HashSet::new);
-        this.mpa = mpa;
-    }
 }

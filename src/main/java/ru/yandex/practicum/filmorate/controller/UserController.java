@@ -3,11 +3,13 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
 import java.util.Collection;
+import java.util.Objects;
 
 @Slf4j
 @RestController
@@ -29,9 +31,9 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public User getUser(@PathVariable String id) {
+    public User getUser(@PathVariable Long id) {
         log.info("Получение пользователя id={}", id);
-        return userService.getUser(Long.valueOf(id));
+        return userService.getUser(id);
     }
 
     @GetMapping
@@ -43,12 +45,18 @@ public class UserController {
     @PutMapping("/{id}/friends/{friendId}")
     public User addFriend(@PathVariable Long id, @PathVariable Long friendId) {
         log.info("Добавление в список друзей id={}, friendId={}", id, friendId);
+        if (Objects.equals(id, friendId)) {
+            throw new ValidationException("При добавлении в друзья id пользователей не должны быть равны");
+        }
         return userService.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public User removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
         log.info("Удаление из списока друзей id={}, friendId={}", id, friendId);
+        if (Objects.equals(id, friendId)) {
+            throw new ValidationException("При удалении из друзей id пользователей не должны быть равны");
+        }
         return userService.removeFriend(id, friendId);
     }
 

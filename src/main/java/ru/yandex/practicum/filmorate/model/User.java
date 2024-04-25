@@ -20,15 +20,15 @@ import java.time.LocalDate;
 public class User {
     @EqualsAndHashCode.Include
     Long id;
-    @NotBlank
+    @NotBlank(message = "Email не может отсутствовать")
     @Email(message = "Неверный формат почты")
     String email;
+    @NotBlank(message = "Логин не может отсутствовать")
     @ValidLogin(message = "Логин не должен содержать пробелы")
-    @NotBlank
     String login;
     @NonFinal
     String name;
-    @NotNull
+    @NotNull(message = "Дата рождения не может отсутствовать")
     @PastOrPresent(message = "Дата рождения не может быть в будущем")
     LocalDate birthday;
 

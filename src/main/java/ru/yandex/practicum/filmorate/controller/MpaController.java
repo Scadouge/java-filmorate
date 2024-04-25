@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
+import javax.validation.Valid;
 import java.util.Collection;
 
 @Slf4j
@@ -25,7 +26,7 @@ public class MpaController {
     }
 
     @GetMapping("/{id}")
-    public Mpa getMpa(@PathVariable Long id) {
+    public Mpa getMpa(@Valid @PathVariable Long id) {
         log.info("Получение Mpa id={}", id);
         return mpaService.getMpa(id);
     }
