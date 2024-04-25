@@ -5,14 +5,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.dao.user.DbUserStorage;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import utils.TestUserUtils;
 
 import java.util.Collection;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,16 +40,39 @@ class DbUserStorageTest {
         assertEquals(0, userStorage.getFriends(firstUser).size());
 
         userStorage.addFriend(firstUser, secondUser);
-        final Collection<User> collectionWithOneFriend = userStorage.getFriends(firstUser);
+        final Collection<User> friendListWithOneFriend = userStorage.getFriends(firstUser);
+        final FriendshipStatus firstToSecondFriendshipStatus = FriendshipStatus.valueOf(Objects.requireNonNull(
+                jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
+                        (rs, RowNum) -> (rs.getString("status")), firstUser.getId())));
 
-        assertEquals(1, collectionWithOneFriend.size());
-        assertTrue(collectionWithOneFriend.contains(secondUser));
+        assertEquals(1, friendListWithOneFriend.size());
+        assertTrue(friendListWithOneFriend.contains(secondUser));
         assertFalse(userStorage.getFriends(secondUser).contains(firstUser));
+        assertEquals(FriendshipStatus.UNACCEPTED, firstToSecondFriendshipStatus);
+
+        userStorage.addFriend(secondUser, firstUser);
+        final FriendshipStatus firstToSecondFriendshipStatusAgain = FriendshipStatus.valueOf(Objects.requireNonNull(
+                jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
+                        (rs, RowNum) -> (rs.getString("status")), firstUser.getId())));
+        final FriendshipStatus secondToFirstFriendshipStatus = FriendshipStatus.valueOf(Objects.requireNonNull(
+                jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
+                        (rs, RowNum) -> (rs.getString("status")), secondUser.getId())));
+
+        assertEquals(FriendshipStatus.ACCEPTED, firstToSecondFriendshipStatusAgain);
+        assertEquals(FriendshipStatus.ACCEPTED, secondToFirstFriendshipStatus);
 
         userStorage.removeFriend(firstUser, secondUser);
-        final Collection<User> collectionWithoutFriend = userStorage.getFriends(firstUser);
+        final Collection<User> friendListWithoutFriends = userStorage.getFriends(firstUser);
+        final FriendshipStatus secondToFirstFriendshipStatusAgain = FriendshipStatus.valueOf(Objects.requireNonNull(
+                jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
+                        (rs, RowNum) -> (rs.getString("status")), secondUser.getId())));
 
-        assertEquals(0, collectionWithoutFriend.size());
+        assertThrows(EmptyResultDataAccessException.class,
+                () -> FriendshipStatus.valueOf(Objects.requireNonNull(
+                        jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
+                        (rs, RowNum) -> (rs.getString("status")), firstUser.getId()))));
+        assertEquals(0, friendListWithoutFriends.size());
+        assertEquals(FriendshipStatus.UNACCEPTED, secondToFirstFriendshipStatusAgain);
 
         final User nonExistingUser = TestUserUtils.getNewUser();
 

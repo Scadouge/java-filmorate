@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS friendship
 (
     user_id   INTEGER,
     friend_id INTEGER,
-    status    BOOLEAN DEFAULT FALSE NOT NULL,
+    status    VARCHAR NOT NULL,
 
     PRIMARY KEY (user_id, friend_id),
     FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,

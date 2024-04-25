@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.FriendshipStatus;
@@ -15,6 +14,7 @@ import java.sql.Date;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Repository
@@ -74,17 +74,23 @@ public class DbUserStorage implements UserStorage {
     @Override
     public void addFriend(User user, User friend) {
         log.info("Добавление дружбы userId={}, friendId={}", user.getId(), friend.getId());
-        String sqlGetFriendship = "SELECT * FROM friendship WHERE user_id = ? AND friend_id = ?";
-        SqlRowSet userFriendship = jdbcTemplate.queryForRowSet(sqlGetFriendship, user.getId(), friend.getId());
-        SqlRowSet friendFriendship = jdbcTemplate.queryForRowSet(sqlGetFriendship, friend.getId(), user.getId());
+        String sqlGetFriendship = "SELECT COUNT(*) AS count FROM friendship WHERE user_id = ? AND friend_id = ?";
+        Integer userFriendListSize = Objects.requireNonNullElse(jdbcTemplate.queryForObject(sqlGetFriendship,
+                (rs, rowNum) -> rs.getInt("count"),
+                user.getId(), friend.getId()), 0);
+        Integer friendFriendListSize = Objects.requireNonNullElse(jdbcTemplate.queryForObject(sqlGetFriendship,
+                (rs, rowNum) -> rs.getInt("count"),
+                friend.getId(), user.getId()), 0);
 
-        if (!userFriendship.next()) {
-            jdbcTemplate.update("INSERT INTO friendship (user_id, friend_id) VALUES (?, ?)",
-                    user.getId(), friend.getId());
-        }
-        if (friendFriendship.next()) {
-            jdbcTemplate.update("UPDATE friendship SET status = ? WHERE user_id IN (?, ?) AND friend_id IN (?, ?)",
-                    FriendshipStatus.ACCEPTED, user.getId(), friend.getId(), user.getId(), friend.getId());
+        if (userFriendListSize == 0) {
+            String status = FriendshipStatus.UNACCEPTED.toString();
+            if (friendFriendListSize > 0) {
+                status = FriendshipStatus.ACCEPTED.toString();
+                jdbcTemplate.update("UPDATE friendship SET status = ? WHERE user_id = ?",
+                        status, friend.getId());
+            }
+            jdbcTemplate.update("INSERT INTO friendship (user_id, friend_id, status) VALUES (?, ?, ?)",
+                    user.getId(), friend.getId(), status);
         }
     }
 
@@ -95,7 +101,7 @@ public class DbUserStorage implements UserStorage {
                 user.getId(), friend.getId());
         if (updated > 0) {
             jdbcTemplate.update("UPDATE friendship SET status = ? WHERE user_id = ? AND friend_id = ?",
-                    FriendshipStatus.UNACCEPTED, friend.getId(), user.getId());
+                    FriendshipStatus.UNACCEPTED.toString(), friend.getId(), user.getId());
         }
     }
 
