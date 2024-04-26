@@ -4,7 +4,7 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 
 public class TestMpaUtils {
     public static Mpa getNewMpa(Long id) {
-        return new Mpa(id, "Mpa " + id, "Mpa desc " + id);
+        return Mpa.builder().id(id).name("Mpa " + id).description("Mpa desc " + id).build();
     }
 
     public static Mpa getNewMpa() {

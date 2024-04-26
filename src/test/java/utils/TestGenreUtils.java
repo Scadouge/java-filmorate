@@ -4,7 +4,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 
 public class TestGenreUtils {
     public static Genre getNewGenre(Long id) {
-        return new Genre(id, "Genre " + id);
+        return Genre.builder().id(id).name("Genre " + id).build();
     }
 
     public static Genre getNewGenre() {
