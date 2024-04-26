@@ -1,5 +1,8 @@
 package ru.yandex.practicum.filmorate.exception;
 
+import lombok.Getter;
+
+@Getter
 public class ItemNotFoundException extends RuntimeException {
     private final Long id;
 
@@ -7,7 +10,8 @@ public class ItemNotFoundException extends RuntimeException {
         this.id = id;
     }
 
-    public Long getId() {
-        return id;
+    public ItemNotFoundException(Long id, String message) {
+        super(message);
+        this.id = id;
     }
 }

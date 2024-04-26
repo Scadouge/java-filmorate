@@ -16,40 +16,40 @@ import java.util.Collection;
 public class FilmController {
     private final FilmService filmService;
 
-    @PostMapping()
+    @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
         log.info("Добавление фильма {}", film);
-        return filmService.addItem(film);
+        return filmService.addFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
         log.info("Обновление фильма {}", film);
-        return filmService.updateItem(film);
+        return filmService.updateFilm(film);
     }
 
     @GetMapping("/{id}")
     public Film getFilm(@PathVariable Long id) {
         log.info("Получение фильма id={}", id);
-        return filmService.getItem(id);
+        return filmService.getFilm(id);
     }
 
     @GetMapping
     public Collection<Film> getAll() {
         log.info("Получение списка всех фильмов");
-        return filmService.getAllItems();
+        return filmService.getAllFilms();
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public Film addLike(@PathVariable Long id, @PathVariable Long userId) {
+    public void addLike(@PathVariable Long id, @PathVariable Long userId) {
         log.info("Добавление лайка id={}, userId={}", id, userId);
-        return filmService.updateLikes(id, userId, false);
+        filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public Film removeLike(@PathVariable Long id, @PathVariable Long userId) {
+    public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
         log.info("Удаление лайка id={}, userId={}", id, userId);
-        return filmService.updateLikes(id, userId, true);
+        filmService.removeLike(id, userId);
     }
 
     @GetMapping("/popular")

@@ -1,48 +1,57 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
+import ru.yandex.practicum.filmorate.dao.user.UserStorage;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class FilmService extends AbstractService<FilmStorage, Film> {
-    private static final Comparator<Film> FILM_COMPARATOR_SORT_BY_LIKES = Comparator.comparing(film -> film.getLikes().size(), Comparator.reverseOrder());
+@AllArgsConstructor
+public class FilmService {
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
 
-    public FilmService(FilmStorage storage) {
-        super(storage);
+    public Film addFilm(Film film) {
+        log.info("Добавление фильма film={}", film);
+        return filmStorage.put(film);
     }
 
-    public Film updateLikes(Long id, Long userId, boolean isDeletion) {
-        log.info("Обновление лайков id={}, userId={}, isDeletion={}", id, userId, isDeletion);
-        Film film = getItem(id);
-        Film updatedFilm = updateFilmLikes(film, userId, isDeletion);
-        storage.put(updatedFilm);
-        return updatedFilm;
-    }
-
-    private Film updateFilmLikes(Film film, Long userId, boolean isDeletion) {
-        Set<Long> likes = new HashSet<>(film.getLikes());
-        if (isDeletion) {
-            likes.remove(userId);
-        } else {
-            likes.add(userId);
+    public Film updateFilm(Film film) {
+        log.info("Обновление фильма film={}", film);
+        if (film.getId() == null) {
+            throw new ValidationException("Не указан id фильма");
         }
-        return film.toBuilder().likes(likes).build();
+        return filmStorage.update(film);
+    }
+
+    public Film getFilm(Long id) {
+        log.info("Получение фильма id={}", id);
+        return filmStorage.get(id);
+    }
+
+    public Collection<Film> getAllFilms() {
+        log.info("Получение списка всех фильмов");
+        return filmStorage.getAll();
+    }
+
+    public void addLike(Long filmId, Long userId) {
+        log.info("Добавление лайка filmId={}, userId={}", filmId, userId);
+        filmStorage.addLike(filmStorage.get(filmId), userStorage.get(userId));
+    }
+
+    public void removeLike(Long filmId, Long userId) {
+        log.info("Удаление лайка filmId={}, userId={}", filmId, userId);
+        filmStorage.removeLike(filmStorage.get(filmId), userStorage.get(userId));
     }
 
     public Collection<Film> getPopular(int count) {
         log.info("Получение списка популярных фильмов count={}", count);
-        return storage.getAll().stream()
-                .sorted(FILM_COMPARATOR_SORT_BY_LIKES)
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.getPopularByLikes(count);
     }
 }

@@ -7,7 +7,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.yandex.practicum.filmorate.exception.ItemAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.ErrorResponse;
@@ -18,7 +17,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @Slf4j
 public class ErrorHandler {
-
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(final ValidationException e) {
@@ -32,13 +30,6 @@ public class ErrorHandler {
         List<String> errorMessages = e.getAllErrors().stream().map(ObjectError::getDefaultMessage).collect(Collectors.toList());
         log.warn(errorMessages.toString(), e);
         return new ErrorResponse(errorMessages.toString());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleItemAlreadyExist(final ItemAlreadyExistException e) {
-        log.warn(e.getMessage(), e);
-        return new ErrorResponse(String.format("Объект с id=%s уже существует", e.getId()));
     }
 
     @ExceptionHandler
