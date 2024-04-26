@@ -7,9 +7,9 @@ import javax.validation.ConstraintValidatorContext;
 import java.util.Optional;
 import java.util.Set;
 
-public class GenresValidator implements ConstraintValidator<ValidGenres, Set<Genre>> {
+public class FilmGenresValidator implements ConstraintValidator<ValidFilmGenres, Set<Genre>> {
     @Override
-    public void initialize(ValidGenres constraintAnnotation) {
+    public void initialize(ValidFilmGenres constraintAnnotation) {
         ConstraintValidator.super.initialize(constraintAnnotation);
     }
 

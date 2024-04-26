@@ -6,7 +6,8 @@ import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 import ru.yandex.practicum.filmorate.validation.ValidDate;
-import ru.yandex.practicum.filmorate.validation.ValidGenres;
+import ru.yandex.practicum.filmorate.validation.ValidFilmGenres;
+import ru.yandex.practicum.filmorate.validation.ValidFilmMpa;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -35,9 +36,10 @@ public class Film {
     @NotNull(message = "Продолжительность не может отсутствовать")
     @Positive(message = "Продолжительность должна быть положительной")
     Integer duration;
-    @ValidGenres(message = "У жанра отсутствует id")
+    @ValidFilmGenres(message = "У жанра отсутствует id")
     @NonFinal
     @Builder.Default
     Set<Genre> genres = new HashSet<>();
+    @ValidFilmMpa(message = "У рейтинга mpa отсутствует id")
     Mpa mpa;
 }

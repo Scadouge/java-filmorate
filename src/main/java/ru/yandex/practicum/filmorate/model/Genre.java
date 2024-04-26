@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 
 @Value
 @AllArgsConstructor
@@ -14,6 +14,6 @@ import javax.validation.constraints.NotNull;
 public class Genre {
     @EqualsAndHashCode.Include
     Long id;
-    @NotNull(message = "Название не может отсутствовать")
+    @NotBlank(message = "Название не может отсутствовать")
     String name;
 }

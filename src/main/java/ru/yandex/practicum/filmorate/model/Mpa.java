@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Value
@@ -14,7 +15,7 @@ import javax.validation.constraints.NotNull;
 public class Mpa {
     @EqualsAndHashCode.Include
     Long id;
-    @NotNull(message = "Название не может отсутствовать")
+    @NotBlank(message = "Название не может отсутствовать")
     String name;
     @NotNull(message = "Описание не может отсутствовать")
     String description;

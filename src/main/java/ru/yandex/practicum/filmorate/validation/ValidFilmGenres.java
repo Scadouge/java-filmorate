@@ -8,10 +8,10 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(
-    validatedBy = {GenresValidator.class}
+    validatedBy = {FilmGenresValidator.class}
 )
 
-public @interface ValidGenres {
+public @interface ValidFilmGenres {
 
     String message() default "Genres validation failed";
 
