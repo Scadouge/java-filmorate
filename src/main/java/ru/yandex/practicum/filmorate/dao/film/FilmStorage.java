@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao.film;
 
 import ru.yandex.practicum.filmorate.dao.CrudStorage;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -14,4 +15,6 @@ public interface FilmStorage extends CrudStorage<Film> {
     Collection<Film> getPopularByLikes(int max);
 
     int getLikesCount(Film film);
+
+    Collection<Film> getSortedDirectorFilms(Director director, String sortBy);
 }

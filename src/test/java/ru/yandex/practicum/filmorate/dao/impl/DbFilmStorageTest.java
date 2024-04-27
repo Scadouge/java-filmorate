@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
+import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
@@ -17,20 +19,11 @@ import ru.yandex.practicum.filmorate.dao.user.DbUserStorage;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
-import utils.TestFilmUtils;
-import utils.TestGenreUtils;
-import utils.TestMpaUtils;
-import utils.TestUserUtils;
+import ru.yandex.practicum.filmorate.model.*;
+import utils.*;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,20 +37,22 @@ class DbFilmStorageTest {
     private UserStorage userStorage;
     private GenreStorage genreStorage;
     private MpaStorage mpaStorage;
+    private DirectorStorage directorStorage;
 
     @BeforeEach
     void setUp() {
         genreStorage = new DbGenreStorage(jdbcTemplate);
         mpaStorage = new DbMpaStorage(jdbcTemplate);
         userStorage = new DbUserStorage(jdbcTemplate);
-        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage);
+        directorStorage = new DbDirectorStorage(jdbcTemplate);
+        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage, directorStorage);
     }
 
-    private Film getNewFilmWithRandomMpaAndGenres() {
-        return getNewFilmWithRandomMpaAndGenres(null);
+    private Film getNewFilledFilm() {
+        return getNewFilledFilm(null);
     }
 
-    private Film getNewFilmWithRandomMpaAndGenres(Long id) {
+    private Film getNewFilledFilm(Long id) {
         Collection<Mpa> mpaCollection = mpaStorage.getAll();
         if (mpaCollection.size() == 0) {
             for (int i = 0; i < 10; i++) {
@@ -75,6 +70,14 @@ class DbFilmStorageTest {
             genreCollection = genreStorage.getAll();
         }
 
+        Collection<Director> directorCollection = directorStorage.getAll();
+        if (directorCollection.size() == 0) {
+            for (int i = 0; i < 10; i++) {
+                directorStorage.put(TestDirectorUtils.getNewDirector());
+            }
+            directorCollection = directorStorage.getAll();
+        }
+
         Random random = new Random();
         return Film.builder()
                 .id(id)
@@ -83,25 +86,27 @@ class DbFilmStorageTest {
                 .releaseDate(LocalDate.of(2014, 10, random.nextInt(30) + 1))
                 .duration(random.nextInt(30) + 1)
                 .genres(genreCollection.stream().skip(new Random().nextInt(genreCollection.size())).collect(Collectors.toSet()))
-                .mpa(mpa).build();
+                .directors(directorCollection.stream().skip(new Random().nextInt(directorCollection.size())).collect(Collectors.toSet()))
+                .mpa(mpa)
+                .build();
     }
 
     @Test
     void testPutFilm() {
-        final Film newFilmWrongGenre = getNewFilmWithRandomMpaAndGenres().toBuilder()
+        final Film newFilmWrongGenre = getNewFilledFilm().toBuilder()
                 .genres(Set.of(TestGenreUtils.getNewNonExistentGenre())).build();
         assertThrows(ValidationException.class, () -> filmStorage.put(newFilmWrongGenre));
 
-        final Film newFilmWrongMpa = getNewFilmWithRandomMpaAndGenres().toBuilder()
+        final Film newFilmWrongMpa = getNewFilledFilm().toBuilder()
                 .mpa(TestMpaUtils.getNewNonExistentMpa()).build();
         assertThrows(ValidationException.class, () -> filmStorage.put(newFilmWrongMpa));
     }
 
     @Test
     void testGetFilmById() {
-        final Film newFilm = filmStorage.put(getNewFilmWithRandomMpaAndGenres());
+        final Film newFilm = filmStorage.put(getNewFilledFilm());
         final Film savedFilm = filmStorage.get(newFilm.getId());
-        final Film newFilmWithoutMpa = filmStorage.put(getNewFilmWithRandomMpaAndGenres()
+        final Film newFilmWithoutMpa = filmStorage.put(getNewFilledFilm()
                 .toBuilder().genres(Set.of()).mpa(null).build());
 
         assertTrue(newFilmWithoutMpa.getGenres().isEmpty());
@@ -116,8 +121,8 @@ class DbFilmStorageTest {
 
     @Test
     void testGetAllFilms() {
-        final Film firstFilm = filmStorage.put(getNewFilmWithRandomMpaAndGenres());
-        final Film secondFilm = filmStorage.put(getNewFilmWithRandomMpaAndGenres());
+        final Film firstFilm = filmStorage.put(getNewFilledFilm());
+        final Film secondFilm = filmStorage.put(getNewFilledFilm());
 
         Collection<Film> allFilms = filmStorage.getAll();
         assertTrue(allFilms.contains(firstFilm));
@@ -126,9 +131,9 @@ class DbFilmStorageTest {
 
     @Test
     void testUpdateFilm() {
-        final Film newFilm = getNewFilmWithRandomMpaAndGenres();
+        final Film newFilm = getNewFilledFilm();
         final Long newFilmId = filmStorage.put(newFilm).getId();
-        final Film toUpdateFilm = getNewFilmWithRandomMpaAndGenres(newFilmId);
+        final Film toUpdateFilm = getNewFilledFilm(newFilmId);
         filmStorage.update(toUpdateFilm);
 
         final Film savedFilm = filmStorage.get(newFilmId);
@@ -142,7 +147,7 @@ class DbFilmStorageTest {
 
     @Test
     void testDeleteFilm() {
-        final Film newFilm = filmStorage.put(getNewFilmWithRandomMpaAndGenres());
+        final Film newFilm = filmStorage.put(getNewFilledFilm());
         filmStorage.get(newFilm.getId());
         filmStorage.delete(newFilm);
         assertThrows(ItemNotFoundException.class, () -> filmStorage.get(newFilm.getId()));
@@ -151,7 +156,7 @@ class DbFilmStorageTest {
 
     @Test
     void testAddLike() {
-        final Film newFilm = filmStorage.put(getNewFilmWithRandomMpaAndGenres());
+        final Film newFilm = filmStorage.put(getNewFilledFilm());
 
         assertThrows(DataIntegrityViolationException.class,
                 () -> filmStorage.addLike(newFilm, TestUserUtils.getNewNonExistentUser()));
@@ -172,7 +177,7 @@ class DbFilmStorageTest {
 
     @Test
     void testRemoveLike() {
-        final Film newFilm = filmStorage.put(getNewFilmWithRandomMpaAndGenres());
+        final Film newFilm = filmStorage.put(getNewFilledFilm());
         final User newUser = userStorage.put(TestUserUtils.getNewUser());
 
         filmStorage.addLike(newFilm, newUser);
@@ -189,9 +194,9 @@ class DbFilmStorageTest {
 
     @Test
     void testGetPopularByLikes() {
-        Film firstFilm = getNewFilmWithRandomMpaAndGenres();
+        Film firstFilm = getNewFilledFilm();
         firstFilm = filmStorage.put(firstFilm);
-        Film secondFilm = getNewFilmWithRandomMpaAndGenres().toBuilder().mpa(null).build();
+        Film secondFilm = getNewFilledFilm().toBuilder().mpa(null).build();
         secondFilm = filmStorage.put(secondFilm);
         final User firstUser = userStorage.put(TestUserUtils.getNewUser());
         final User secondUser = userStorage.put(TestUserUtils.getNewUser());
@@ -214,5 +219,46 @@ class DbFilmStorageTest {
         assertEquals(secondFilm, mostPopularFilm.get());
         assertEquals(firstFilm, almostPopularFilm.get());
         assertEquals(2, popularByLikes.size());
+    }
+
+    @Test
+    void testGetSortedDirectorFilms() {
+        final Director director = directorStorage.put(TestDirectorUtils.getNewDirector());
+        Film firstFilm = getNewFilledFilm().toBuilder().genres(new HashSet<>()).directors(Set.of(director))
+                .releaseDate(LocalDate.of(1000, 1, 1)).build();
+        firstFilm = filmStorage.put(firstFilm);
+        Film secondFilm = getNewFilledFilm().toBuilder().mpa(null).directors(Set.of(director))
+                .releaseDate(LocalDate.of(3000, 1, 1)).build();
+        secondFilm = filmStorage.put(secondFilm);
+        Film thirdFilm = getNewFilledFilm().toBuilder().directors(Set.of(director))
+                .releaseDate(LocalDate.of(2000, 1, 1)).build();
+        thirdFilm = filmStorage.put(thirdFilm);
+        Film fourthFilm = getNewFilledFilm().toBuilder().directors(Set.of())
+                .releaseDate(LocalDate.of(4000, 1, 1)).build();
+        fourthFilm = filmStorage.put(fourthFilm);
+        final User firstUser = userStorage.put(TestUserUtils.getNewUser());
+        final User secondUser = userStorage.put(TestUserUtils.getNewUser());
+
+        filmStorage.addLike(secondFilm, firstUser);
+        filmStorage.addLike(secondFilm, secondUser);
+        filmStorage.addLike(firstFilm, secondUser);
+
+        assertThrows(ValidationException.class, () -> filmStorage.getSortedDirectorFilms(director, "unknown"));
+
+        final Collection<Film> sortedByYearFilms = filmStorage.getSortedDirectorFilms(director, "year");
+
+        assertEquals(3, sortedByYearFilms.size());
+        assertEquals(firstFilm, sortedByYearFilms
+                .stream().findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
+        assertEquals(thirdFilm, sortedByYearFilms
+                .stream().skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
+
+        final Collection<Film> sortedByYearLikes = filmStorage.getSortedDirectorFilms(director, "likes");
+
+        assertEquals(3, sortedByYearLikes.size());
+        assertEquals(secondFilm, sortedByYearLikes
+                .stream().findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
+        assertEquals(firstFilm, sortedByYearLikes
+                .stream().skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
     }
 }

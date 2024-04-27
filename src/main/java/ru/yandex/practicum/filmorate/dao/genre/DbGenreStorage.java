@@ -13,6 +13,8 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -35,7 +37,7 @@ public class DbGenreStorage implements GenreStorage {
 
     @Override
     public Genre get(Long id) {
-        log.info("Получение жанра id={}", id);
+        log.debug("Получение жанра id={}", id);
         String sql = "SELECT * FROM genre WHERE genre_id = ?";
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> GenreMapper.createGenre(rs), id);
@@ -45,15 +47,23 @@ public class DbGenreStorage implements GenreStorage {
     }
 
     @Override
+    public Collection<Genre> get(Set<Long> genreIds) {
+        log.debug("Получение жанров genreIds={}", genreIds);
+        String sql = String.format("SELECT * FROM genre WHERE genre_id IN (%s)",
+                String.join(",", genreIds.stream().map(String::valueOf).collect(Collectors.toSet())));
+        return jdbcTemplate.query(sql, (rs, rowNum) -> GenreMapper.createGenre(rs));
+    }
+
+    @Override
     public Collection<Genre> getAll() {
-        log.info("Получение всех жанров");
+        log.debug("Получение всех жанров");
         String sql = "SELECT * FROM genre";
         return jdbcTemplate.query(sql, (rs, rowNum) -> GenreMapper.createGenre(rs));
     }
 
     @Override
     public Genre update(Genre genre) {
-        log.info("Обновление жанра genre={}", genre);
+        log.debug("Обновление жанра genre={}", genre);
         jdbcTemplate.update("UPDATE genre SET name = ? WHERE genre_id = ?",
                 genre.getName(), genre.getId());
         return get(genre.getId());
@@ -61,7 +71,7 @@ public class DbGenreStorage implements GenreStorage {
 
     @Override
     public Genre delete(Genre genre) {
-        log.info("Удаление жанра id={}", genre.getId());
+        log.debug("Удаление жанра id={}", genre.getId());
         jdbcTemplate.update("DELETE FROM genre WHERE genre_id = ?", genre.getId());
         return genre;
     }

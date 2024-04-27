@@ -25,6 +25,7 @@ public class UserService {
         if (user.getId() == null) {
             throw new ValidationException("Не указан id пользователя");
         }
+        userStorage.get(user.getId());
         return userStorage.update(user);
     }
 
