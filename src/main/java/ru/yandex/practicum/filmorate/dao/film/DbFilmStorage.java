@@ -134,16 +134,19 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public Collection<Film> getPopularByLikes(int count) {
         log.info("Получение списка популярных фильмов count={}", count);
-        String sql = "SELECT f.*,m.name AS mpa_name,m.description AS mpa_description " +
+        String sql = "SELECT cl.count, f.*, m.name AS mpa_name, m.description AS mpa_description " +
                 "FROM films AS f " +
-                "RIGHT JOIN (SELECT film_id FROM likes GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT ?) " +
-                    "AS CL ON CL.film_id= f.film_id " +
-                "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id";
-        List<Film> filmsWithoutGenres = jdbcTemplate.query(sql, (rs, rowNum) -> FilmMapper.createFilm(rs), count);
+                "LEFT JOIN (SELECT COUNT(*) AS count, film_id FROM likes GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT ?) " +
+                "AS cl ON cl.film_id= f.film_id " +
+                "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
+                "ORDER BY cl.count DESC " +
+                "LIMIT ?";
+        List<Film> filmsWithoutGenres = jdbcTemplate.query(sql, (rs, rowNum) -> FilmMapper.createFilm(rs), count, count);
         Map<Long, Set<Genre>> genresMapping = getFilmGenreMapping(filmsWithoutGenres.stream().map(Film::getId)
                 .collect(Collectors.toSet()));
         return filmsWithoutGenres.stream()
-                .map(film -> film.toBuilder().genres(genresMapping.get(film.getId())).build())
+                .map(film -> genresMapping.containsKey(film.getId()) ?
+                        film.toBuilder().genres(genresMapping.get(film.getId())).build() : film)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
