@@ -13,6 +13,6 @@ public class Director {
     @EqualsAndHashCode.Include
     Long id;
 
-    @NotBlank(message = "Название не может отсутствовать")
+    @NotBlank(message = "Имя режиссера не может отсутствовать")
     String name;
 }
