@@ -41,7 +41,7 @@ public class Film {
     Set<Genre> genres = new HashSet<>();
     @ValidFilmMpa(message = "У рейтинга mpa отсутствует id")
     Mpa mpa;
-    @ValidFilmDirectors(message = "У режисера отсутствует id")
+    @ValidFilmDirectors(message = "У режиссера отсутствует id")
     @Builder.Default
     Set<Director> directors = new HashSet<>();
 }
