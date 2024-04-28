@@ -15,7 +15,7 @@ public class FilmDirectorsValidator implements ConstraintValidator<ValidFilmDire
 
     @Override
     public boolean isValid(Set<Director> set, ConstraintValidatorContext constraintValidatorContext) {
-        Optional<Director> nullId = set.stream().filter(genre -> genre.getId() == null).findFirst();
+        Optional<Director> nullId = set.stream().filter(director -> director.getId() == null).findFirst();
         return nullId.isEmpty();
     }
 }
