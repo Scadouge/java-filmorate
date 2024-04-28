@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -53,5 +54,12 @@ public class FilmService {
     public Collection<Film> getPopular(int count) {
         log.info("Получение списка популярных фильмов count={}", count);
         return filmStorage.getPopularByLikes(count);
+    }
+
+    public Collection<Film> getCommonFilms(Long userId, Long friendId) {
+        List<Film> userFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(userId));
+        List<Film> friendFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(friendId));
+        userFavouriteFilms.retainAll(friendFavouriteFilms);
+        return userFavouriteFilms;
     }
 }
