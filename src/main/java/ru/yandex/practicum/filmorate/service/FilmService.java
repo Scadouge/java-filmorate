@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -17,42 +18,44 @@ import java.util.List;
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final DirectorStorage directorStorage;
 
     public Film addFilm(Film film) {
-        log.info("Добавление фильма film={}", film);
+        log.debug("Добавление фильма film={}", film);
         return filmStorage.put(film);
     }
 
     public Film updateFilm(Film film) {
-        log.info("Обновление фильма film={}", film);
+        log.debug("Обновление фильма film={}", film);
         if (film.getId() == null) {
             throw new ValidationException("Не указан id фильма");
         }
+        filmStorage.get(film.getId());
         return filmStorage.update(film);
     }
 
     public Film getFilm(Long id) {
-        log.info("Получение фильма id={}", id);
+        log.debug("Получение фильма id={}", id);
         return filmStorage.get(id);
     }
 
     public Collection<Film> getAllFilms() {
-        log.info("Получение списка всех фильмов");
+        log.debug("Получение списка всех фильмов");
         return filmStorage.getAll();
     }
 
     public void addLike(Long filmId, Long userId) {
-        log.info("Добавление лайка filmId={}, userId={}", filmId, userId);
+        log.debug("Добавление лайка filmId={}, userId={}", filmId, userId);
         filmStorage.addLike(filmStorage.get(filmId), userStorage.get(userId));
     }
 
     public void removeLike(Long filmId, Long userId) {
-        log.info("Удаление лайка filmId={}, userId={}", filmId, userId);
+        log.debug("Удаление лайка filmId={}, userId={}", filmId, userId);
         filmStorage.removeLike(filmStorage.get(filmId), userStorage.get(userId));
     }
 
     public Collection<Film> getPopular(int count) {
-        log.info("Получение списка популярных фильмов count={}", count);
+        log.debug("Получение списка популярных фильмов count={}", count);
         return filmStorage.getPopularByLikes(count);
     }
 
@@ -61,5 +64,10 @@ public class FilmService {
         List<Film> friendFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(friendId));
         userFavouriteFilms.retainAll(friendFavouriteFilms);
         return userFavouriteFilms;
+    }
+
+    public Collection<Film> getSortedDirectorFilms(Long directorId, String sortBy) {
+        log.debug("Получение списка фильмов режиссера directorId={}, sortBy={}", directorId, sortBy);
+        return filmStorage.getSortedDirectorFilms(directorStorage.get(directorId), sortBy);
     }
 }
