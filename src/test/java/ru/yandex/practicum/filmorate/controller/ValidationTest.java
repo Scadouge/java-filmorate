@@ -2,12 +2,10 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import utils.TestFilmUtils;
-import utils.TestGenreUtils;
-import utils.TestMpaUtils;
-import utils.TestUserUtils;
+import utils.*;
 
 import javax.validation.Validation;
 import javax.validation.Validator;
@@ -72,6 +70,10 @@ class ValidationTest {
                 .isEmpty();
         assertThat(validator.validate(TestFilmUtils.getNewFilmWithMpaAndGenres()
                 .toBuilder().mpa(Mpa.builder().id(null).build())
+                .build()))
+                .hasSize(1);
+        assertThat(validator.validate(TestFilmUtils.getNewFilmWithMpaAndGenres()
+                .toBuilder().directors(Set.of(Director.builder().id(null).name("Director null id").build()))
                 .build()))
                 .hasSize(1);
     }
@@ -157,5 +159,18 @@ class ValidationTest {
                 .toBuilder().description("")
                 .build()))
                 .isEmpty();
+    }
+
+    @Test
+    void directorValidationTest() {
+        assertThat(validator.validate(TestDirectorUtils.getNewDirector())).isEmpty();
+        assertThat(validator.validate(TestDirectorUtils.getNewDirector()
+                .toBuilder().name(null)
+                .build()))
+                .hasSize(1);
+        assertThat(validator.validate(TestDirectorUtils.getNewDirector()
+                .toBuilder().name("")
+                .build()))
+                .hasSize(1);
     }
 }

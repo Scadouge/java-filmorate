@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS likes, film_genre, friendship, genre, films, mpa, users;
+DROP TABLE IF EXISTS likes, film_genre, friendship, genre, films, mpa, users, director, film_director;
 
 CREATE TABLE IF NOT EXISTS users
 (
@@ -63,4 +63,20 @@ CREATE TABLE IF NOT EXISTS film_genre
     PRIMARY KEY (film_id, genre_id),
     FOREIGN KEY (film_id) REFERENCES films (film_id) ON DELETE CASCADE,
     FOREIGN KEY (genre_id) REFERENCES genre (genre_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS director
+(
+    director_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name        VARCHAR NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS film_director
+(
+    film_id     INTEGER,
+    director_id INTEGER,
+
+    PRIMARY KEY (film_id, director_id),
+    FOREIGN KEY (film_id) REFERENCES films (film_id) ON DELETE CASCADE,
+    FOREIGN KEY (director_id) REFERENCES director (director_id) ON DELETE CASCADE
 );

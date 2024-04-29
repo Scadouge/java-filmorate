@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
+import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
@@ -19,6 +21,7 @@ import utils.TestGenreUtils;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +38,8 @@ class DbGenreStorageTest {
     void setUp() {
         genreStorage = new DbGenreStorage(jdbcTemplate);
         MpaStorage mpaStorage = new DbMpaStorage(jdbcTemplate);
-        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage);
+        DirectorStorage directorStorage = new DbDirectorStorage(jdbcTemplate);
+        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage, directorStorage);
     }
 
     @Test
@@ -53,13 +57,23 @@ class DbGenreStorageTest {
     @Test
     void testGetGenre() {
         final Genre nonExistentGenre = TestGenreUtils.getNewNonExistentGenre();
+
         assertThrows(ItemNotFoundException.class, () -> genreStorage.get(nonExistentGenre.getId()));
+
         final Genre newGenre = genreStorage.put(TestGenreUtils.getNewGenre());
+
         assertDoesNotThrow(() -> genreStorage.get(newGenre.getId()));
+
+        Set<Long> genresIds = Set.of(1L, 3L, 5L);
+        final Collection<Genre> genres = genreStorage.get(genresIds);
+        Optional<Genre> missingGenre = genres.stream().filter(genre -> !genresIds.contains(genre.getId())).findFirst();
+
+        assertFalse(missingGenre.isPresent());
+        assertEquals(3, genres.size());
     }
 
     @Test
-    void testGetAllGenre() {
+    void testGetAllGenres() {
         final Genre newGenre = genreStorage.put(TestGenreUtils.getNewGenre());
         Collection<Genre> allGenres = genreStorage.getAll();
 
@@ -67,7 +81,7 @@ class DbGenreStorageTest {
     }
 
     @Test
-    void testUpdateMpa() {
+    void testUpdateGenre() {
         final Genre newGenre = genreStorage.put(TestGenreUtils.getNewGenre());
         final Genre toUpdateGenre = TestGenreUtils.getNewGenre(newGenre.getId());
         genreStorage.update(toUpdateGenre);
@@ -80,7 +94,7 @@ class DbGenreStorageTest {
     }
 
     @Test
-    void testDeleteMpa() {
+    void testDeleteGenre() {
         final Genre newGenre = genreStorage.put(TestGenreUtils.getNewGenre());
         final Film newFilm = Film.builder()
                 .name("Film")
