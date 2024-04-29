@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -60,8 +59,9 @@ public class FilmService {
     }
 
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
-        List<Film> userFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(userId));
-        List<Film> friendFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(friendId));
+        log.info("Получения списка общих фильмов пользователей с userId={} и friendId={}", userId, friendId);
+        Collection<Film> userFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(userId));
+        Collection<Film> friendFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(friendId));
         userFavouriteFilms.retainAll(friendFavouriteFilms);
         return userFavouriteFilms;
     }

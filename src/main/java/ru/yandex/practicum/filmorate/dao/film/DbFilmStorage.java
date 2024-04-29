@@ -20,10 +20,8 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -162,6 +160,23 @@ public class DbFilmStorage implements FilmStorage {
         Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) AS count FROM likes WHERE film_id = ?",
                 (rs, rowNum) -> rs.getInt("count"), film.getId());
         return Objects.requireNonNullElse(count, 0);
+    }
+
+    @Override
+    public Collection<Film> getFavouriteFilms(User user) {
+        log.debug("Получение списка понравившихся пользователю user={} фильмов, отсортированных по популярности", user);
+        String sqlSelectQuery = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description, " +
+                "l.user_id, t.likes_count FROM likes l " +
+                "LEFT JOIN (SELECT l.film_id, COUNT(l.user_id) AS likes_count FROM likes l " +
+                "GROUP BY l.film_id) AS t ON t.film_id = l.film_id " +
+                "LEFT JOIN films f ON l.film_id = f.film_id " +
+                "LEFT JOIN mpa m ON f.mpa_id = m.mpa_id " +
+                "WHERE l.user_id = ? " +
+                "ORDER BY t.likes_count DESC";
+        List<Film> unfinishedFilms = jdbcTemplate.query(sqlSelectQuery, (rs, rowNum) ->
+                FilmMapper.createFilm(rs), user.getId());
+        Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
+        return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
     }
 
     @Override
