@@ -205,12 +205,12 @@ class DbFilmStorageTest {
         filmStorage.addLike(secondFilm, secondUser);
         filmStorage.addLike(firstFilm, secondUser);
 
-        Collection<Film> popularByLikesMaxOne = filmStorage.getPopularByLikes(1);
+        Collection<Film> popularByLikesMaxOne = filmStorage.getPopularByYearAndGenre(1, null, null);
 
         assertEquals(1, popularByLikesMaxOne.size());
         assertTrue(popularByLikesMaxOne.contains(secondFilm));
 
-        Collection<Film> popularByLikes = filmStorage.getPopularByLikes(10);
+        Collection<Film> popularByLikes = filmStorage.getPopularByYearAndGenre(10, null, null);
         Optional<Film> mostPopularFilm = popularByLikes.stream().findFirst();
         Optional<Film> almostPopularFilm = popularByLikes.stream().skip(1).findFirst();
 
