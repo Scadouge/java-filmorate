@@ -189,14 +189,8 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public Collection<Film> searchFilms(String query, String by) {
         log.debug("Получение списка фильмов по поисковому запросу query={}, by={}", query, by);
-        Set<String> searchBy = new HashSet<>();
         String[] split = by.split(",");
-        if (split.length > 1) {
-            searchBy.addAll(Arrays.asList(split));
-        } else {
-            searchBy.add(by);
-        }
-
+        Set<String> searchBy = new HashSet<>(Arrays.asList(split));
         Set<String> filters = new HashSet<>();
         if (searchBy.contains("director")) {
             searchBy.remove("director");
@@ -207,8 +201,7 @@ public class DbFilmStorage implements FilmStorage {
             searchBy.remove("title");
             filters.add("SELECT t.film_id FROM films AS t WHERE t.name ILIKE ?");
         }
-
-        if (searchBy.size() > 0) {
+        if (searchBy.size() > 0 || split.length == 0) {
             throw new ValidationException("Неизвестные тэги поиска " + searchBy);
         }
         String sb = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
