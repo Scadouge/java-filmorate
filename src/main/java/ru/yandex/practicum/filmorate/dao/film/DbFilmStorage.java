@@ -216,16 +216,15 @@ public class DbFilmStorage implements FilmStorage {
                 "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
                 "RIGHT JOIN(" +
                 String.join(" UNION ", filters) +
-                ") AS title ON title.film_id = f.film_id";
+                ") AS title ON title.film_id = f.film_id " +
+                "LEFT JOIN (SELECT COUNT(*) AS count, film_id FROM likes GROUP BY film_id) AS cl ON cl.film_id= f.film_id " +
+                "ORDER BY cl.count DESC";
         List<Film> unfinishedFilms = jdbcTemplate.query(sb,
                 (rs, rowNum) -> FilmMapper.createFilm(rs),
                 Collections.nCopies(filters.size(), "%" + query + "%").toArray());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-        return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds))
-                .stream()
-                .sorted(Comparator.comparing(Film::getId).reversed()) // Для прохождения тестов
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
     }
 
     private void setGenres(Film film) {

@@ -265,10 +265,10 @@ class DbFilmStorageTest {
     @Test
     void testSearchFilms() {
         Director firstDirector = directorStorage.put(TestDirectorUtils.getNewDirector().toBuilder().name("AAAATi").build());
-        Director secondDirector = directorStorage.put(TestDirectorUtils.getNewDirector().toBuilder().name("0000").build());
+        Director secondDirector = directorStorage.put(TestDirectorUtils.getNewDirector().toBuilder().name("00000").build());
 
         Film firstFilm = filmStorage.put(getNewFilledFilm().toBuilder().name("TiTle").directors(Set.of(secondDirector)).build());
-        Film secondFilm = filmStorage.put(getNewFilledFilm().toBuilder().name("0").directors(Set.of(secondDirector)).build());
+        Film secondFilm = filmStorage.put(getNewFilledFilm().toBuilder().name("000").directors(Set.of(secondDirector)).build());
         Film thirdFilm = filmStorage.put(getNewFilledFilm().toBuilder().directors(Set.of(firstDirector)).build());
 
         Collection<Film> searchByDirector = filmStorage.searchFilms("AaA", "director");
@@ -287,7 +287,7 @@ class DbFilmStorageTest {
         assertTrue(searchByTitleAndDirector.contains(thirdFilm));
         assertEquals(2, searchByTitleAndDirector.size());
 
-        Collection<Film> searchCrossedFilms = filmStorage.searchFilms("0", "title,director");
+        Collection<Film> searchCrossedFilms = filmStorage.searchFilms("000", "title,director");
 
         assertTrue(searchCrossedFilms.contains(secondFilm));
         assertTrue(searchCrossedFilms.contains(firstFilm));
