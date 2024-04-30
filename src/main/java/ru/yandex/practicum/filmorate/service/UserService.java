@@ -67,4 +67,10 @@ public class UserService {
         userFriends.retainAll(friendFriends);
         return userFriends;
     }
+
+    public User deleteUser(Long userId) {
+        log.info("Удаление пользователя с id={}", userId);
+        User user = getUser(userId);
+        return userStorage.delete(user);
+    }
 }
