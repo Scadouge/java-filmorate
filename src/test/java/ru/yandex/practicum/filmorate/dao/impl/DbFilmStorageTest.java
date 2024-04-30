@@ -266,10 +266,15 @@ class DbFilmStorageTest {
     void testSearchFilms() {
         Director firstDirector = directorStorage.put(TestDirectorUtils.getNewDirector().toBuilder().name("AAAATi").build());
         Director secondDirector = directorStorage.put(TestDirectorUtils.getNewDirector().toBuilder().name("00000").build());
-
         Film firstFilm = filmStorage.put(getNewFilledFilm().toBuilder().name("TiTle").directors(Set.of(secondDirector)).build());
         Film secondFilm = filmStorage.put(getNewFilledFilm().toBuilder().name("000").directors(Set.of(secondDirector)).build());
         Film thirdFilm = filmStorage.put(getNewFilledFilm().toBuilder().directors(Set.of(firstDirector)).build());
+        User firstUser = userStorage.put(TestUserUtils.getNewUser());
+        User secondUser = userStorage.put(TestUserUtils.getNewUser());
+
+        filmStorage.addLike(thirdFilm, firstUser);
+        filmStorage.addLike(secondFilm, firstUser);
+        filmStorage.addLike(secondFilm, secondUser);
 
         Collection<Film> searchByDirector = filmStorage.searchFilms("AaA", "director");
 
@@ -286,12 +291,20 @@ class DbFilmStorageTest {
         assertTrue(searchByTitleAndDirector.contains(firstFilm));
         assertTrue(searchByTitleAndDirector.contains(thirdFilm));
         assertEquals(2, searchByTitleAndDirector.size());
+        assertEquals(thirdFilm, searchByTitleAndDirector.stream()
+                .findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
+        assertEquals(firstFilm, searchByTitleAndDirector.stream()
+                .skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
 
         Collection<Film> searchCrossedFilms = filmStorage.searchFilms("000", "title,director");
 
         assertTrue(searchCrossedFilms.contains(secondFilm));
         assertTrue(searchCrossedFilms.contains(firstFilm));
         assertEquals(2, searchCrossedFilms.size());
+        assertEquals(secondFilm, searchCrossedFilms.stream()
+                .findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
+        assertEquals(firstFilm, searchCrossedFilms.stream()
+                .skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
 
         assertEquals(0, filmStorage.searchFilms("xxxxxx", "title,director").size());
         assertEquals(0, filmStorage.searchFilms("xxxxxx", "director").size());
