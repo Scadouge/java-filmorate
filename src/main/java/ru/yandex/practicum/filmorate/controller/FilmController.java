@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -62,5 +63,14 @@ public class FilmController {
     public Collection<Film> getSortedDirectorFilms(@PathVariable Long directorId, @RequestParam String sortBy) {
         log.info("Получение списка фильмов режиссера directorId={}, sortBy={}", directorId, sortBy);
         return filmService.getSortedDirectorFilms(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public Collection<Film> searchFilms(@RequestParam String query, @RequestParam String by) {
+        log.info("Получение списка фильмов по поисковому запросу query={}, by={}", query, by);
+        if (query.isBlank()) {
+            throw new ValidationException("Параметр query не может быть пустым");
+        }
+        return filmService.searchFilms(query, by);
     }
 }
