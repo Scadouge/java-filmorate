@@ -66,6 +66,12 @@ public class FilmService {
         return userFavouriteFilms;
     }
 
+    public Film deleteFilm(Long filmId) {
+        log.info("Удаление фильма с id={}", filmId);
+        Film film = getFilm(filmId);
+        return filmStorage.delete(film);
+    }
+
     public Collection<Film> getSortedDirectorFilms(Long directorId, String sortBy) {
         log.debug("Получение списка фильмов режиссера directorId={}, sortBy={}", directorId, sortBy);
         return filmStorage.getSortedDirectorFilms(directorStorage.get(directorId), sortBy);

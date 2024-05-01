@@ -64,6 +64,12 @@ public class FilmController {
         return filmService.getCommonFilms(userId, friendId);
     }
 
+    @DeleteMapping("/{filmId}")
+    public Film deleteFilm(@PathVariable Long filmId) {
+        log.info("Удаление фильма с id={}", filmId);
+        return filmService.deleteFilm(filmId);
+    }
+
     @GetMapping("/director/{directorId}")
     public Collection<Film> getSortedDirectorFilms(@PathVariable Long directorId, @RequestParam String sortBy) {
         log.info("Получение списка фильмов режиссера directorId={}, sortBy={}", directorId, sortBy);
