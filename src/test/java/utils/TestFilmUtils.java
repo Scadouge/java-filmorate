@@ -36,4 +36,11 @@ public class TestFilmUtils {
                 .mpa(Mpa.builder().id(1L).name("Mpa 1").description("Mpa desc 1").build())
                 .build();
     }
+
+    public static Film getNewFilmWithGenreAndYear(Genre genre, String year) {
+        return getNewFilm().toBuilder()
+                .genres(Set.of(genre))
+                .releaseDate(LocalDate.parse(year + "-01-01"))
+                .build();
+    }
 }
