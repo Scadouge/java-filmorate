@@ -5,15 +5,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.recommendations.SlopeOne;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
+    private final FilmService filmService;
 
     public User addUser(User user) {
         log.info("Добавление пользователя user={}", user);
@@ -72,5 +77,11 @@ public class UserService {
         log.info("Удаление пользователя с id={}", userId);
         User user = getUser(userId);
         return userStorage.delete(user);
+    }
+
+    public Collection<Film> getRecommendedFilms(Long id) {
+        log.info("Получение рекомендаций фильмов для пользователя id={}", id);
+        Map<Long, List<Film>> usersLikedFilms = filmService.getLikedFilms();
+        return SlopeOne.slopeOne(usersLikedFilms, id);
     }
 }

@@ -6,6 +6,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public interface FilmStorage extends CrudStorage<Film> {
     void addLike(Film film, User user);
@@ -21,4 +23,6 @@ public interface FilmStorage extends CrudStorage<Film> {
     Collection<Film> getSortedDirectorFilms(Director director, String sortBy);
 
     Collection<Film> searchFilms(String query, String by);
+
+    Map<Long, List<Film>> getLikedFilms();
 }

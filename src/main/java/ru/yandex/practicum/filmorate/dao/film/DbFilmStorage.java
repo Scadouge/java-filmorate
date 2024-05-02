@@ -269,6 +269,21 @@ public class DbFilmStorage implements FilmStorage {
         return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
     }
 
+    @Override
+    public Map<Long, List<Film>> getLikedFilms() {
+        log.debug("Получение списка понравившихся фильмов для каждого пользователя");
+        Map<Long, List<Film>> usersFilms = new HashMap<>();
+        jdbcTemplate.query("SELECT l.* FROM likes AS l", (rs, rowNum) -> {
+            if (!usersFilms.containsKey(rs.getLong("user_id"))) {
+                usersFilms.put(rs.getLong("user_id"), new ArrayList<>());
+            }
+            usersFilms.get(rs.getLong("user_id"))
+                    .add(get(rs.getLong("film_id")));
+            return null;
+        });
+        return usersFilms;
+    }
+
     private void setGenres(Film film) {
         log.debug("Запись жанров фильма id={}", film.getId());
         Collection<Long> existedGenreIds = genreStorage.get(film.getGenres()
