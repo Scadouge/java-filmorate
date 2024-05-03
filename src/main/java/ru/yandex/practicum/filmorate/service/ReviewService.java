@@ -29,6 +29,7 @@ public class ReviewService {
             filmStorage.get(review.getFilmId());
             return reviewStorage.put(review);
         } catch (DataAccessException e) {
+            log.warn("Ошибка получения данных из таблиц reviews или users");
             throw new ItemNotFoundException(review.getUserId() | review.getFilmId(), e.getMessage());
         }
     }
@@ -61,22 +62,22 @@ public class ReviewService {
 
     public void addLikeToReview(Long reviewId, Long userId) {
         log.debug("Добавление лайка отзыву с id={} от юзера с id={}", reviewId, userId);
-            reviewStorage.addLikeToReview(reviewId, userId);
+        reviewStorage.addLikeToReview(reviewId, userId);
     }
 
     public void addDislikeToReview(Long reviewId, Long userId) {
         log.debug("Добавление дизлайка отзыву с id={} от юзера с id={}", reviewId, userId);
-            reviewStorage.addDislikeToReview(reviewId, userId);
+        reviewStorage.addDislikeToReview(reviewId, userId);
     }
 
     public void deleteLikeOrDislikeFromReview(Long reviewId, Long userId) {
         log.debug("Удаление рейтинга отзыву с id={} от юзера с id={}", reviewId, userId);
-            reviewStorage.deleteLikeOrDislikeFromReview(reviewId, userId);
+        reviewStorage.deleteLikeOrDislikeFromReview(reviewId, userId);
     }
 
     public Collection<Review> getReviewsByFilmId(Long filmId, int count) {
         log.debug("Получение всех отзывов, или числа отзывов {} шт. для фильма с id={}", count, filmId);
-        if (filmId == null) {
+        if (filmId == null || count <= 0) {
             return getAllReviews();
         }
         return reviewStorage.getAllReviewsByFilmId(filmId, count);

@@ -21,8 +21,9 @@ public class DbReviewStorage implements ReviewStorage {
 
     // TODO: DbReviewStorage class
     public static final int LIKE_VALUE = 1;
-    private static final int DISLIKE_VALUE = -1;
+    public static final int DISLIKE_VALUE = -1;
     private final JdbcTemplate jdbcTemplate;
+
     @Override
     public Review put(Review review) {
         try {
@@ -40,6 +41,7 @@ public class DbReviewStorage implements ReviewStorage {
             log.debug("Добавление отзыва review={}", updatedReview);
             return updatedReview;
         } catch (DataAccessException e) {
+            log.warn("Ошибка получения данных из таблиц reviews или users");
             throw new ItemNotFoundException(review.getUserId() | review.getFilmId(), e.getMessage());
         }
     }
@@ -57,6 +59,7 @@ public class DbReviewStorage implements ReviewStorage {
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> ReviewMapper.createReview(rs), id);
         } catch (EmptyResultDataAccessException e) {
+            log.warn("Ошибка получения отзыва с id={}, отзыв не найден.", id);
             throw new ItemNotFoundException(id);
         }
     }
@@ -81,6 +84,7 @@ public class DbReviewStorage implements ReviewStorage {
             jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), review.getReviewId());
             return get(review.getReviewId());
         } catch (EmptyResultDataAccessException e) {
+            log.warn("Ошибка обновления отзыва с id={}, отзыв не найден.", review.getReviewId());
             throw new ItemNotFoundException(review.getReviewId());
         }
     }
@@ -92,6 +96,7 @@ public class DbReviewStorage implements ReviewStorage {
             jdbcTemplate.update("DELETE FROM reviews WHERE review_id = ?", review.getReviewId());
             return review;
         } catch (EmptyResultDataAccessException e) {
+            log.warn("Ошибка удаления отзыва с id={}, отзыв не найден.", review.getReviewId());
             throw new ItemNotFoundException(review.getReviewId());
         }
     }
@@ -103,6 +108,7 @@ public class DbReviewStorage implements ReviewStorage {
             jdbcTemplate.update(sql, reviewId, userId, LIKE_VALUE);
             log.debug("Отзыву с id={} добавлен лайк от юзера с id={}", reviewId, userId);
         } catch (DataAccessException e) {
+            log.warn("Ошибка получения данных из таблиц reviews или users");
             throw new ItemNotFoundException(reviewId | userId, e.getMessage());
         }
     }
@@ -114,6 +120,7 @@ public class DbReviewStorage implements ReviewStorage {
             jdbcTemplate.update(sql, reviewId, userId, DISLIKE_VALUE);
             log.debug("Отзыву с id={} добавлен дизлайк от юзера с id={}", reviewId, userId);
         } catch (DataAccessException e) {
+            log.warn("Ошибка получения данных из таблиц reviews или users");
             throw new ItemNotFoundException(reviewId | userId, e.getMessage());
         }
     }
@@ -125,6 +132,7 @@ public class DbReviewStorage implements ReviewStorage {
             jdbcTemplate.update(sql, reviewId, userId);
             log.debug("Отзыву с id={} удалён рейтинг от юзера с id={}", reviewId, userId);
         } catch (DataAccessException e) {
+            log.warn("Ошибка получения данных из таблиц reviews или users");
             throw new ItemNotFoundException(reviewId | userId, e.getMessage());
         }
     }

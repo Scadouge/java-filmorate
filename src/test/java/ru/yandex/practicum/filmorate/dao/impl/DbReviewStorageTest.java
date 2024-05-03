@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
+import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
@@ -25,9 +27,11 @@ import utils.TestReviewUtils;
 import utils.TestUserUtils;
 
 import java.util.Collection;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static ru.yandex.practicum.filmorate.dao.review.DbReviewStorage.DISLIKE_VALUE;
 import static ru.yandex.practicum.filmorate.dao.review.DbReviewStorage.LIKE_VALUE;
 
 @JdbcTest
@@ -39,6 +43,8 @@ class DbReviewStorageTest {
     private UserStorage userStorage;
     private GenreStorage genreStorage;
     private MpaStorage mpaStorage;
+
+    private DirectorStorage directorStorage;
     private ReviewStorage reviewStorage;
 
     Film film;
@@ -53,7 +59,8 @@ class DbReviewStorageTest {
         genreStorage = new DbGenreStorage(jdbcTemplate);
         mpaStorage = new DbMpaStorage(jdbcTemplate);
         userStorage = new DbUserStorage(jdbcTemplate);
-        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage);
+        directorStorage = new DbDirectorStorage(jdbcTemplate);
+        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage, directorStorage);
 
         film = filmStorage.put(TestFilmUtils.getNewFilm());
         user = userStorage.put(TestUserUtils.getNewUser());
@@ -117,7 +124,7 @@ class DbReviewStorageTest {
     }
 
     @Test
-    void addLikeToReview() {
+    void testAddLikeToReview() {
         Long usefulBeforeLike = firstReview.getUseful();
         reviewStorage.addLikeToReview(firstReview.getReviewId(), user.getId());
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
@@ -125,18 +132,40 @@ class DbReviewStorageTest {
     }
 
     @Test
-    void addDislikeToReview() {
+    void testAddDislikeToReview() {
+        Long usefulBeforeLike = firstReview.getUseful();
+        reviewStorage.addDislikeToReview(firstReview.getReviewId(), user.getId());
+        Review updatedReview = reviewStorage.get(firstReview.getReviewId());
+        assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
     }
 
     @Test
-    void deleteLikeToReview() {
-    }
+    void testDeleteLikeOrDislikeToReview() {
+        Long usefulBeforeLike = firstReview.getUseful();
+        reviewStorage.addDislikeToReview(firstReview.getReviewId(), user.getId());
+        Review updatedReview = reviewStorage.get(firstReview.getReviewId());
+        assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
 
-    @Test
-    void deleteDislikeToReview() {
+        reviewStorage.deleteLikeOrDislikeFromReview(firstReview.getReviewId(), user.getId());
+        updatedReview = reviewStorage.get(firstReview.getReviewId());
+        assertEquals(usefulBeforeLike, updatedReview.getUseful());
     }
 
     @Test
     void getAllReviewsByFilmId() {
+        User newUser = userStorage.put(TestUserUtils.getNewUser());
+
+        Review thirdReview = reviewStorage.put(TestReviewUtils.getNewReview().toBuilder()
+                .filmId(film.getId())
+                .userId(user.getId())
+                .build());
+
+        reviewStorage.addLikeToReview(firstReview.getReviewId(), user.getId());
+        reviewStorage.addLikeToReview(firstReview.getReviewId(), newUser.getId());
+        reviewStorage.addDislikeToReview(secondReview.getReviewId(), user.getId());
+
+        final Collection<Review> expectedList = List.of(firstReview, thirdReview, secondReview);
+
+        assertEquals(expectedList, reviewStorage.getAllReviewsByFilmId(film.getId(), 10));
     }
 }

@@ -16,6 +16,7 @@ import java.util.Collection;
 public class ReviewController {
     // TODO: ReviewController class
     private final ReviewService reviewService;
+
     @PostMapping
     public Review addReview(@Valid @RequestBody Review review) {
         log.info("Добавление отзыва {}", review);
@@ -27,12 +28,6 @@ public class ReviewController {
         log.info("Получение отзыва id={}", id);
         return reviewService.getReview(id);
     }
-
-//    @GetMapping
-//    public Collection<Review> getAllReviews() {
-//        log.info("Получение списка всех отзывов");
-//        return reviewService.getAllReviews();
-//    }
 
     @PutMapping
     public Review updateReview(@Valid @RequestBody Review review) {
@@ -59,13 +54,13 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void deleteLikeFromReview(@PathVariable Long id, @PathVariable Long userId){
+    public void deleteLikeFromReview(@PathVariable Long id, @PathVariable Long userId) {
         log.info("Удаление лайка у отзыва id={} от пользователя id={}", id, userId);
         reviewService.deleteLikeOrDislikeFromReview(id, userId);
     }
 
     @DeleteMapping("/{id}/dislike/{userId}")
-    public void deleteDislikeFromReview(@PathVariable Long id, @PathVariable Long userId){
+    public void deleteDislikeFromReview(@PathVariable Long id, @PathVariable Long userId) {
         log.info("Удаление дизлайка у отзыва id={} от пользователя id={}", id, userId);
         reviewService.deleteLikeOrDislikeFromReview(id, userId);
     }

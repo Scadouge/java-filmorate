@@ -13,7 +13,6 @@ public class TestReviewUtils {
                 .isPositive(random.nextBoolean())
                 .userId((long) random.nextInt(20))
                 .filmId((long) random.nextInt(20))
-                .useful((long) random.nextInt(20))
                 .build();
     }
 
@@ -24,7 +23,6 @@ public class TestReviewUtils {
                 .isPositive(random.nextBoolean())
                 .userId((long) random.nextInt(20))
                 .filmId((long) random.nextInt(20))
-                .useful((long) random.nextInt(20))
                 .build();
     }
 

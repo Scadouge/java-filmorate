@@ -21,13 +21,13 @@ public class Review {
     @NotBlank(message = "Содержание отзыва не может отсутствовать")
     String content;
 
-    @NotNull
+    @NotNull(message = "Тип отзыва не может быть null")
     Boolean isPositive;
 
-    @NotNull
+    @NotNull(message = "id пользователя не может быть null")
     Long userId;
 
-    @NotNull
+    @NotNull(message = "id фильма не может быть null")
     Long filmId;
 
     @Builder.Default
