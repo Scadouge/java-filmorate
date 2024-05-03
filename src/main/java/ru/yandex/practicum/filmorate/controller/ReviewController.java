@@ -11,7 +11,7 @@ import java.util.Collection;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "reviews")
+@RequestMapping("/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
     // TODO: ReviewController class
@@ -28,11 +28,11 @@ public class ReviewController {
         return reviewService.getReview(id);
     }
 
-    @GetMapping
-    public Collection<Review> getAllReviews() {
-        log.info("Получение списка всех отзывов");
-        return reviewService.getAllReviews();
-    }
+//    @GetMapping
+//    public Collection<Review> getAllReviews() {
+//        log.info("Получение списка всех отзывов");
+//        return reviewService.getAllReviews();
+//    }
 
     @PutMapping
     public Review updateReview(@Valid @RequestBody Review review) {
@@ -70,9 +70,9 @@ public class ReviewController {
         reviewService.deleteLikeOrDislikeFromReview(id, userId);
     }
 
-    @GetMapping("reviews")
+    @GetMapping
     public Collection<Review> getReviewsByFilmId(@RequestParam(required = false) Long filmId,
-                                                 @RequestParam("10") int count) {
+                                                 @RequestParam(defaultValue = "10") int count) {
         log.debug("Получение всех отзывов, или числа отзывов {} шт. для фильма с id={}", count, filmId);
         return reviewService.getReviewsByFilmId(filmId, count);
     }
