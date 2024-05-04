@@ -42,13 +42,13 @@ public class ReviewController {
 
     @PutMapping("/{id}/like/{userId}")
     public void addLikeToReview(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Добавление лайка отзыву с id={} от юзера с id={}", id, userId);
+        log.info("Добавление лайка отзыву с id={} от пользователя с id={}", id, userId);
         reviewService.addLikeToReview(id, userId);
     }
 
     @PutMapping("/{id}/dislike/{userId}")
     public void addDislikeToReview(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Добавление дизлайка отзыву с id={} от юзера с id={}", id, userId);
+        log.info("Добавление дизлайка отзыву с id={} от пользователя с id={}", id, userId);
         reviewService.addDislikeToReview(id, userId);
     }
 

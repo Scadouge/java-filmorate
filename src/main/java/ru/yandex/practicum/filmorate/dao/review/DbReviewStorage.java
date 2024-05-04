@@ -89,21 +89,21 @@ public class DbReviewStorage implements ReviewStorage {
     public void addLikeToReview(Review review, User user) {
         String sql = "INSERT INTO review_rated (review_id, user_id, rated) VALUES (?, ?, ?)";
         jdbcTemplate.update(sql, review.getReviewId(), user.getId(), LIKE_VALUE);
-        log.debug("Отзыву с id={} добавлен лайк от юзера с id={}", review.getReviewId(), user.getId());
+        log.debug("Отзыву с id={} добавлен лайк от пользователя с id={}", review.getReviewId(), user.getId());
     }
 
     @Override
     public void addDislikeToReview(Review review, User user) {
         String sql = "INSERT INTO review_rated (review_id, user_id, rated) VALUES (?, ?, ?)";
         jdbcTemplate.update(sql, review.getReviewId(), user.getId(), DISLIKE_VALUE);
-        log.debug("Отзыву с id={} добавлен дизлайк от юзера с id={}", review.getReviewId(), user.getId());
+        log.debug("Отзыву с id={} добавлен дизлайк от пользователя с id={}", review.getReviewId(), user.getId());
     }
 
     @Override
     public void deleteLikeOrDislikeFromReview(Review review, User user) {
         String sql = "DELETE FROM review_rated WHERE review_id = ? AND user_id = ?";
         jdbcTemplate.update(sql, review.getReviewId(), user.getId());
-        log.debug("Отзыву с id={} удалён рейтинг от юзера с id={}", review.getReviewId(), user.getId());
+        log.debug("Отзыву с id={} удалён рейтинг от пользователя с id={}", review.getReviewId(), user.getId());
     }
 
     @Override

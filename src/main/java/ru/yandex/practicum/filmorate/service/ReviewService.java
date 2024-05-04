@@ -48,17 +48,17 @@ public class ReviewService {
     }
 
     public void addLikeToReview(Long reviewId, Long userId) {
-        log.debug("Добавление лайка отзыву с id={} от юзера с id={}", reviewId, userId);
+        log.debug("Добавление лайка отзыву с id={} от пользователя с id={}", reviewId, userId);
         reviewStorage.addLikeToReview(reviewStorage.get(reviewId), userStorage.get(userId));
     }
 
     public void addDislikeToReview(Long reviewId, Long userId) {
-        log.debug("Добавление дизлайка отзыву с id={} от юзера с id={}", reviewId, userId);
+        log.debug("Добавление дизлайка отзыву с id={} от пользователя с id={}", reviewId, userId);
         reviewStorage.addDislikeToReview(reviewStorage.get(reviewId), userStorage.get(userId));
     }
 
     public void deleteLikeOrDislikeFromReview(Long reviewId, Long userId) {
-        log.debug("Удаление рейтинга отзыву с id={} от юзера с id={}", reviewId, userId);
+        log.debug("Удаление рейтинга отзыву с id={} от пользователя с id={}", reviewId, userId);
         reviewStorage.deleteLikeOrDislikeFromReview(reviewStorage.get(reviewId), userStorage.get(userId));
     }
 
