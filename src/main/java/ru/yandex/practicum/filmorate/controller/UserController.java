@@ -4,12 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -83,5 +85,10 @@ public class UserController {
     public Collection<Film> getRecommendations(@PathVariable Long id) {
         log.info("Получение списка рекомендаций для пользователя id={}", id);
         return userService.getRecommendedFilms(id);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Event> getFeed(@PathVariable Long id) {
+        return userService.getFeed(id);
     }
 }

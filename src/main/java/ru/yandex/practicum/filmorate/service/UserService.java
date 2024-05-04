@@ -5,11 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.recommendations.SlopeOne;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +20,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
+    private final EventService eventService;
     private final FilmService filmService;
 
     public User addUser(User user) {
@@ -49,6 +52,7 @@ public class UserService {
         User user = getUser(userId);
         User friend = getUser(friendId);
         userStorage.addFriend(user, friend);
+        eventService.createAddFriend(userId, friendId);
         return user;
     }
 
@@ -57,6 +61,7 @@ public class UserService {
         User user = getUser(userId);
         User friend = getUser(friendId);
         userStorage.removeFriend(user, friend);
+        eventService.createRemoveFriend(userId, friendId);
         return user;
     }
 
@@ -83,5 +88,10 @@ public class UserService {
         log.info("Получение рекомендаций фильмов для пользователя id={}", id);
         Map<Long, List<Film>> usersLikedFilms = filmService.getLikedFilms();
         return new SlopeOne(usersLikedFilms, id).slopeOne();
+    }
+
+    public List<Event> getFeed(Long id) {
+        log.info("Получение событий для пользователя с id={}", id);
+        return eventService.findEventsByUserId(id);
     }
 }
