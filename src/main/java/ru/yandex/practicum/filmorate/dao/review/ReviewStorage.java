@@ -1,18 +1,20 @@
 package ru.yandex.practicum.filmorate.dao.review;
 
 import ru.yandex.practicum.filmorate.dao.CrudStorage;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
 
 public interface ReviewStorage extends CrudStorage<Review> {
 
-    void addLikeToReview(Long reviewId, Long userId);
+    void addLikeToReview(Review review, User user);
 
-    void addDislikeToReview(Long reviewId, Long userId);
+    void addDislikeToReview(Review review, User user);
 
-    void deleteLikeOrDislikeFromReview(Long reviewId, Long userId);
+    void deleteLikeOrDislikeFromReview(Review review, User user);
 
-    Collection<Review> getAllReviewsByFilmId(Long filmId, int count);
+    Collection<Review> getAllReviewsByFilmId(Film film, int count);
 
 }

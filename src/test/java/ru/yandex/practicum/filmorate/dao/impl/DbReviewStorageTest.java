@@ -126,7 +126,7 @@ class DbReviewStorageTest {
     @Test
     void testAddLikeToReview() {
         Long usefulBeforeLike = firstReview.getUseful();
-        reviewStorage.addLikeToReview(firstReview.getReviewId(), user.getId());
+        reviewStorage.addLikeToReview(firstReview, user);
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike + LIKE_VALUE, updatedReview.getUseful());
     }
@@ -134,7 +134,7 @@ class DbReviewStorageTest {
     @Test
     void testAddDislikeToReview() {
         Long usefulBeforeLike = firstReview.getUseful();
-        reviewStorage.addDislikeToReview(firstReview.getReviewId(), user.getId());
+        reviewStorage.addDislikeToReview(firstReview, user);
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
     }
@@ -142,11 +142,11 @@ class DbReviewStorageTest {
     @Test
     void testDeleteLikeOrDislikeToReview() {
         Long usefulBeforeLike = firstReview.getUseful();
-        reviewStorage.addDislikeToReview(firstReview.getReviewId(), user.getId());
+        reviewStorage.addDislikeToReview(firstReview, user);
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
 
-        reviewStorage.deleteLikeOrDislikeFromReview(firstReview.getReviewId(), user.getId());
+        reviewStorage.deleteLikeOrDislikeFromReview(firstReview, user);
         updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike, updatedReview.getUseful());
     }
@@ -160,12 +160,12 @@ class DbReviewStorageTest {
                 .userId(user.getId())
                 .build());
 
-        reviewStorage.addLikeToReview(firstReview.getReviewId(), user.getId());
-        reviewStorage.addLikeToReview(firstReview.getReviewId(), newUser.getId());
-        reviewStorage.addDislikeToReview(secondReview.getReviewId(), user.getId());
+        reviewStorage.addLikeToReview(firstReview, user);
+        reviewStorage.addLikeToReview(firstReview, newUser);
+        reviewStorage.addDislikeToReview(secondReview, user);
 
         final Collection<Review> expectedList = List.of(firstReview, thirdReview, secondReview);
 
-        assertEquals(expectedList, reviewStorage.getAllReviewsByFilmId(film.getId(), 10));
+        assertEquals(expectedList, reviewStorage.getAllReviewsByFilmId(film, 10));
     }
 }
