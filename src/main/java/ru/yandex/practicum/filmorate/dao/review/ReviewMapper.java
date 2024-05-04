@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ReviewMapper {
-    // TODO: Review mapper
     public static Review createReview(ResultSet rs) throws SQLException {
         return Review.builder()
                 .reviewId(rs.getLong("review_id"))

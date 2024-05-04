@@ -6,7 +6,6 @@ import ru.yandex.practicum.filmorate.model.Review;
 import java.util.Collection;
 
 public interface ReviewStorage extends CrudStorage<Review> {
-    // TODO: ReviewStorage interface
 
     void addLikeToReview(Long reviewId, Long userId);
 

@@ -17,7 +17,6 @@ import java.util.Collection;
 @Service
 @AllArgsConstructor
 public class ReviewService {
-    // TODO: ReviewService class
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
@@ -46,17 +45,13 @@ public class ReviewService {
 
     public Review updateReview(Review review) {
         log.info("Обновление отзыва review={}", review);
-        if (review.getReviewId() == null) {
-            throw new ValidationException("Не указан id отзыва");
-        }
+        reviewStorage.get(review.getReviewId());
         return reviewStorage.update(review);
     }
 
-    public Review deleteReview(Review review) {
-        log.debug("Удаление отзыва review={}", review);
-        if (review.getReviewId() == null) {
-            throw new ValidationException("Не указан id отзыва");
-        }
+    public Review deleteReview(Long reviewId) {
+        log.debug("Удаление отзыва c id={}", reviewId);
+        Review review = getReview(reviewId);
         return reviewStorage.delete(review);
     }
 

@@ -14,7 +14,6 @@ import java.util.Collection;
 @RequestMapping("/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
-    // TODO: ReviewController class
     private final ReviewService reviewService;
 
     @PostMapping
@@ -35,10 +34,10 @@ public class ReviewController {
         return reviewService.updateReview(review);
     }
 
-    @DeleteMapping("/{id}")
-    public Review deleteReview(@PathVariable Long id) {
-        log.info("Удаление отзыва id={}", id);
-        return reviewService.deleteReview(reviewService.getReview(id));
+    @DeleteMapping("/{reviewId}")
+    public Review deleteReview(@PathVariable Long reviewId) {
+        log.info("Удаление отзыва id={}", reviewId);
+        return reviewService.deleteReview(reviewId);
     }
 
     @PutMapping("/{id}/like/{userId}")

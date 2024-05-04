@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,14 +20,12 @@ import java.util.Map;
 @AllArgsConstructor
 public class DbReviewStorage implements ReviewStorage {
 
-    // TODO: DbReviewStorage class
     public static final int LIKE_VALUE = 1;
     public static final int DISLIKE_VALUE = -1;
     private final JdbcTemplate jdbcTemplate;
 
     @Override
     public Review put(Review review) {
-        try {
             SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
             jdbcInsert.withTableName("reviews");
             jdbcInsert.usingGeneratedKeyColumns("review_id");
@@ -40,15 +39,10 @@ public class DbReviewStorage implements ReviewStorage {
             Review updatedReview = review.toBuilder().reviewId(id).build();
             log.debug("Добавление отзыва review={}", updatedReview);
             return updatedReview;
-        } catch (DataAccessException e) {
-            log.warn("Ошибка получения данных из таблиц reviews или users");
-            throw new ItemNotFoundException(review.getUserId() | review.getFilmId(), e.getMessage());
-        }
     }
 
     @Override
     public Review get(Long id) {
-        // TODO: DbReviewStorage get method
         log.debug("Получение отзыва id={}", id);
         String sql = "SELECT r.review_id, r.content, r.film_id, r.user_id, r.is_positive, SUM(rr.rated) AS useful " +
                 "FROM reviews AS r " +
@@ -80,61 +74,36 @@ public class DbReviewStorage implements ReviewStorage {
     public Review update(Review review) {
         log.info("Обновление отзыва review={}", review);
         String sql = "UPDATE reviews SET content = ?, is_positive = ? WHERE review_id = ?";
-        try {
-            jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), review.getReviewId());
-            return get(review.getReviewId());
-        } catch (EmptyResultDataAccessException e) {
-            log.warn("Ошибка обновления отзыва с id={}, отзыв не найден.", review.getReviewId());
-            throw new ItemNotFoundException(review.getReviewId());
-        }
+        jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), review.getReviewId());
+        return get(review.getReviewId());
     }
 
     @Override
     public Review delete(Review review) {
         log.info("Удаление отзыва id={}", review.getReviewId());
-        try {
-            jdbcTemplate.update("DELETE FROM reviews WHERE review_id = ?", review.getReviewId());
-            return review;
-        } catch (EmptyResultDataAccessException e) {
-            log.warn("Ошибка удаления отзыва с id={}, отзыв не найден.", review.getReviewId());
-            throw new ItemNotFoundException(review.getReviewId());
-        }
+        jdbcTemplate.update("DELETE FROM reviews WHERE review_id = ?", review.getReviewId());
+        return review;
     }
 
     @Override
     public void addLikeToReview(Long reviewId, Long userId) {
         String sql = "INSERT INTO review_rated (review_id, user_id, rated) VALUES (?, ?, ?)";
-        try {
             jdbcTemplate.update(sql, reviewId, userId, LIKE_VALUE);
             log.debug("Отзыву с id={} добавлен лайк от юзера с id={}", reviewId, userId);
-        } catch (DataAccessException e) {
-            log.warn("Ошибка получения данных из таблиц reviews или users");
-            throw new ItemNotFoundException(reviewId | userId, e.getMessage());
-        }
     }
 
     @Override
     public void addDislikeToReview(Long reviewId, Long userId) {
         String sql = "INSERT INTO review_rated (review_id, user_id, rated) VALUES (?, ?, ?)";
-        try {
             jdbcTemplate.update(sql, reviewId, userId, DISLIKE_VALUE);
             log.debug("Отзыву с id={} добавлен дизлайк от юзера с id={}", reviewId, userId);
-        } catch (DataAccessException e) {
-            log.warn("Ошибка получения данных из таблиц reviews или users");
-            throw new ItemNotFoundException(reviewId | userId, e.getMessage());
-        }
     }
 
     @Override
     public void deleteLikeOrDislikeFromReview(Long reviewId, Long userId) {
         String sql = "DELETE FROM review_rated WHERE review_id = ? AND user_id = ?";
-        try {
             jdbcTemplate.update(sql, reviewId, userId);
             log.debug("Отзыву с id={} удалён рейтинг от юзера с id={}", reviewId, userId);
-        } catch (DataAccessException e) {
-            log.warn("Ошибка получения данных из таблиц reviews или users");
-            throw new ItemNotFoundException(reviewId | userId, e.getMessage());
-        }
     }
 
     @Override
