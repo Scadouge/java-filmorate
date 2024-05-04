@@ -58,6 +58,20 @@ public class FilmService {
         return filmStorage.getPopularByLikes(count);
     }
 
+    public Collection<Film> getCommonFilms(Long userId, Long friendId) {
+        log.info("Получения списка общих фильмов пользователей с userId={} и friendId={}", userId, friendId);
+        Collection<Film> userFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(userId));
+        Collection<Film> friendFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(friendId));
+        userFavouriteFilms.retainAll(friendFavouriteFilms);
+        return userFavouriteFilms;
+    }
+
+    public Film deleteFilm(Long filmId) {
+        log.info("Удаление фильма с id={}", filmId);
+        Film film = getFilm(filmId);
+        return filmStorage.delete(film);
+    }
+
     public Collection<Film> getSortedDirectorFilms(Long directorId, String sortBy) {
         log.debug("Получение списка фильмов режиссера directorId={}, sortBy={}", directorId, sortBy);
         return filmStorage.getSortedDirectorFilms(directorStorage.get(directorId), sortBy);
