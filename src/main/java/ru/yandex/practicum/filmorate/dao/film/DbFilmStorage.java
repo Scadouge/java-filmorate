@@ -19,9 +19,12 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -207,6 +210,40 @@ public class DbFilmStorage implements FilmStorage {
         }
         List<Film> unfinishedFilms = jdbcTemplate.query(sql, (rs, rowNum) -> FilmMapper.createFilm(rs), director.getId());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
+        return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
+    }
+
+    @Override
+    public Collection<Film> searchFilms(String query, String by) {
+        log.debug("Получение списка фильмов по поисковому запросу query={}, by={}", query, by);
+        String[] split = by.split(",");
+        Set<String> searchBy = new HashSet<>(Arrays.asList(split));
+        Set<String> filters = new HashSet<>();
+        if (searchBy.contains("director")) {
+            searchBy.remove("director");
+            filters.add("SELECT fd.film_id FROM film_director AS fd " +
+                    "LEFT JOIN director AS d ON d.director_id = fd.director_id WHERE d.name ILIKE ?");
+        }
+        if (searchBy.contains("title")) {
+            searchBy.remove("title");
+            filters.add("SELECT t.film_id FROM films AS t WHERE t.name ILIKE ?");
+        }
+        if (searchBy.size() > 0 || split.length == 0) {
+            throw new ValidationException("Неизвестные тэги поиска " + searchBy);
+        }
+        String sb = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
+                "FROM films AS f " +
+                "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
+                "RIGHT JOIN(" +
+                String.join(" UNION ", filters) +
+                ") AS title ON title.film_id = f.film_id " +
+                "LEFT JOIN (SELECT COUNT(*) AS count, film_id FROM likes GROUP BY film_id) AS cl ON cl.film_id= f.film_id " +
+                "ORDER BY cl.count DESC";
+        List<Film> unfinishedFilms = jdbcTemplate.query(sb,
+                (rs, rowNum) -> FilmMapper.createFilm(rs),
+                Collections.nCopies(filters.size(), "%" + query + "%").toArray());
+        Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
     }
 

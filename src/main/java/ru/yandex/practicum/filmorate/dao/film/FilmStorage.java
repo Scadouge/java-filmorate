@@ -19,4 +19,6 @@ public interface FilmStorage extends CrudStorage<Film> {
     Collection<Film> getFavouriteFilms(User user);
 
     Collection<Film> getSortedDirectorFilms(Director director, String sortBy);
+
+    Collection<Film> searchFilms(String query, String by);
 }

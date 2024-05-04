@@ -76,4 +76,9 @@ public class FilmService {
         log.debug("Получение списка фильмов режиссера directorId={}, sortBy={}", directorId, sortBy);
         return filmStorage.getSortedDirectorFilms(directorStorage.get(directorId), sortBy);
     }
+
+    public Collection<Film> searchFilms(String query, String by) {
+        log.debug("Получение списка фильмов по поисковому запросу query={}, by={}", query, by);
+        return filmStorage.searchFilms(query, by);
+    }
 }

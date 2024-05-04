@@ -2,17 +2,20 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.util.Collection;
 
 @Slf4j
 @RestController
 @RequestMapping(path = "films")
 @RequiredArgsConstructor
+@Validated
 public class FilmController {
     private final FilmService filmService;
 
@@ -74,5 +77,11 @@ public class FilmController {
     public Collection<Film> getSortedDirectorFilms(@PathVariable Long directorId, @RequestParam String sortBy) {
         log.info("Получение списка фильмов режиссера directorId={}, sortBy={}", directorId, sortBy);
         return filmService.getSortedDirectorFilms(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public Collection<Film> searchFilms(@RequestParam @NotBlank String query, @RequestParam String by) {
+        log.info("Получение списка фильмов по поисковому запросу query={}, by={}", query, by);
+        return filmService.searchFilms(query, by);
     }
 }
