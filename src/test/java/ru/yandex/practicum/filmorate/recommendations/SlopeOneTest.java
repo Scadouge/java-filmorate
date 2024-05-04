@@ -76,14 +76,14 @@ public class SlopeOneTest {
         Collection<Film> rec = userService.getRecommendedFilms(firstUser.getId());
         assertThat(rec).isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(Collections.EMPTY_LIST);
+                .isEqualTo(Collections.EMPTY_SET);
 
         filmService.addLike(firstFilm.getId(), firstUser.getId());
         filmService.addLike(secondFilm.getId(), secondUser.getId());
         rec = userService.getRecommendedFilms(firstUser.getId());
         assertThat(rec).isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(Collections.EMPTY_LIST);
+                .isEqualTo(Collections.EMPTY_SET);
     }
 
     @Test
@@ -101,6 +101,6 @@ public class SlopeOneTest {
         Collection<Film> rec = userService.getRecommendedFilms(firstUser.getId());
         assertThat(rec).isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(new ArrayList<>(List.of(secondFilm)));
+                .isEqualTo(new HashSet<>(List.of(secondFilm)));
     }
 }

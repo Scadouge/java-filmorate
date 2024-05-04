@@ -82,6 +82,6 @@ public class UserService {
     public Collection<Film> getRecommendedFilms(Long id) {
         log.info("Получение рекомендаций фильмов для пользователя id={}", id);
         Map<Long, List<Film>> usersLikedFilms = filmService.getLikedFilms();
-        return SlopeOne.slopeOne(usersLikedFilms, id);
+        return new SlopeOne(usersLikedFilms, id).slopeOne();
     }
 }

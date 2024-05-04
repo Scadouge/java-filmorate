@@ -6,17 +6,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class SlopeOne {
-    private static final Map<Film, HashMap<Film, Integer>> freq = new HashMap<>();
+    private final Map<Film, HashMap<Film, Integer>> freq;
+    private final Map<Long, List<Film>> usersFilms;
+    private final Long userId;
 
-    public static Collection<Film> slopeOne(Map<Long, List<Film>> usersFilms, Long userId) {
+    public SlopeOne(Map<Long, List<Film>> usersFilms, Long userId) {
+        this.freq = new HashMap<>();
+        this.usersFilms = usersFilms;
+        this.userId = userId;
+    }
+
+    public Collection<Film> slopeOne() {
         if (!usersFilms.containsKey(userId)) {
             return new ArrayList<>();
         }
-        buildFreqMatrix(usersFilms);
-        return getRecommendations(usersFilms, userId);
+        buildFreqMatrix();
+        return getRecommendations();
     }
 
-    private static void buildFreqMatrix(Map<Long, List<Film>> usersFilms) {
+    private void buildFreqMatrix() {
         for (Map.Entry<Long, List<Film>> e : usersFilms.entrySet()) {
             for (Film f : e.getValue()) {
                 if (!freq.containsKey(f)) {
@@ -34,7 +42,7 @@ public class SlopeOne {
         }
     }
 
-    private static Collection<Film> getRecommendations(Map<Long, List<Film>> usersFilms, Long userId) {
+    private Collection<Film> getRecommendations() {
         HashMap<Film, Integer> recommendations = new HashMap<>();
         for (Film f : usersFilms.get(userId)) {
             for (Film f2 : freq.keySet()) {
@@ -54,6 +62,6 @@ public class SlopeOne {
         return recommendations.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 }

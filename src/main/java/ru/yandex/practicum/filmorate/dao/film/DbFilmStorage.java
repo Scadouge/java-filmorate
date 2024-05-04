@@ -273,14 +273,26 @@ public class DbFilmStorage implements FilmStorage {
     public Map<Long, List<Film>> getLikedFilms() {
         log.debug("Получение списка понравившихся фильмов для каждого пользователя");
         Map<Long, List<Film>> usersFilms = new HashMap<>();
-        jdbcTemplate.query("SELECT l.* FROM likes AS l", (rs, rowNum) -> {
+        String sql = "SELECT l.user_id, f.*, mpa.name AS mpa_name, mpa.description AS mpa_description " +
+                "FROM likes AS l " +
+                "LEFT JOIN films AS f ON l.film_id = f.film_id " +
+                "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id " +
+                "LIMIT 100";
+        jdbcTemplate.query(sql, (rs, rowNum) -> {
             if (!usersFilms.containsKey(rs.getLong("user_id"))) {
                 usersFilms.put(rs.getLong("user_id"), new ArrayList<>());
             }
             usersFilms.get(rs.getLong("user_id"))
-                    .add(get(rs.getLong("film_id")));
+                    .add(FilmMapper.createFilm(rs));
             return null;
         });
+        for (Long userId : usersFilms.keySet()) {
+            Set<Long> filmsId = usersFilms.get(userId).stream()
+                    .map(Film::getId).collect(Collectors.toSet());
+            usersFilms.put(userId, new ArrayList<>(FilmMapper.mapFilms(usersFilms.get(userId),
+                    getFilmGenreMapping(filmsId),
+                    getFilmDirectorMapping(filmsId))));
+        }
         return usersFilms;
     }
 
