@@ -5,15 +5,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
+    private final EventService eventService;
 
     public User addUser(User user) {
         log.info("Добавление пользователя user={}", user);
@@ -44,6 +47,7 @@ public class UserService {
         User user = getUser(userId);
         User friend = getUser(friendId);
         userStorage.addFriend(user, friend);
+        eventService.createAddFriend(userId, friendId);
         return user;
     }
 
@@ -52,6 +56,7 @@ public class UserService {
         User user = getUser(userId);
         User friend = getUser(friendId);
         userStorage.removeFriend(user, friend);
+        eventService.createRemoveFriend(userId, friendId);
         return user;
     }
 
@@ -72,5 +77,10 @@ public class UserService {
         log.info("Удаление пользователя с id={}", userId);
         User user = getUser(userId);
         return userStorage.delete(user);
+    }
+
+    public List<Event> getFeed(Long id) {
+        log.info("Получение событий для пользователя с id={}", id);
+        return eventService.findEventsByUserId(id);
     }
 }
