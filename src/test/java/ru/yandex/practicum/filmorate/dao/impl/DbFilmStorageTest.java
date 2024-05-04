@@ -205,12 +205,12 @@ class DbFilmStorageTest {
         filmStorage.addLike(secondFilm, secondUser);
         filmStorage.addLike(firstFilm, secondUser);
 
-        Collection<Film> popularByLikesMaxOne = filmStorage.getPopularByLikes(1);
+        Collection<Film> popularByLikesMaxOne = filmStorage.getPopularByYearAndGenre(1, null, null);
 
         assertEquals(1, popularByLikesMaxOne.size());
         assertTrue(popularByLikesMaxOne.contains(secondFilm));
 
-        Collection<Film> popularByLikes = filmStorage.getPopularByLikes(10);
+        Collection<Film> popularByLikes = filmStorage.getPopularByYearAndGenre(10, null, null);
         Optional<Film> mostPopularFilm = popularByLikes.stream().findFirst();
         Optional<Film> almostPopularFilm = popularByLikes.stream().skip(1).findFirst();
 
@@ -316,5 +316,51 @@ class DbFilmStorageTest {
         assertThrows(ValidationException.class,
                 () -> filmStorage.searchFilms("gdrgsge", ",,,"));
         assertDoesNotThrow(() -> filmStorage.searchFilms("", "title"));
+    }
+
+    @Test
+    public void testGetPopularFilteredByGenreAndDirector() {
+        Genre genre1 = TestGenreUtils.getNewGenre(1L);
+        Genre genre2 = TestGenreUtils.getNewGenre(2L);
+
+        Film film1 = TestFilmUtils.getNewFilmWithGenreAndYear(genre1, "2015");
+        Film film2 = TestFilmUtils.getNewFilmWithGenreAndYear(genre2, "2010");
+        Film film3 = TestFilmUtils.getNewFilmWithGenreAndYear(genre1, "2010");
+        Film film4 = TestFilmUtils.getNewFilmWithGenreAndYear(genre2, "2015");
+
+        filmStorage.put(film1);
+        filmStorage.put(film2);
+        filmStorage.put(film3);
+        filmStorage.put(film4);
+
+        final Collection<Film> filteredByGenre =
+                filmStorage.getPopularByYearAndGenre(10, genre1.getId(), null);
+        final Collection<Film> filteredByDate =
+                filmStorage.getPopularByYearAndGenre(10, null, "2010");
+        final Collection<Film> filteredByGenreAndDate =
+                filmStorage.getPopularByYearAndGenre(10, genre2.getId(), "2015");
+        final Collection<Film> withoutFilter =
+                filmStorage.getPopularByYearAndGenre(10, null, null);
+
+        // Проверка filteredByGenre
+        assertEquals(2, filteredByGenre.size());
+        assertEquals(film1.getName(), filteredByGenre.stream().findFirst().get().getName());
+        assertEquals(film3.getName(), filteredByGenre.stream().skip(1).findFirst().get().getName());
+
+        // Проверка filteredByDate
+        assertEquals(2, filteredByDate.size());
+        assertEquals(film2.getName(), filteredByDate.stream().findFirst().get().getName());
+        assertEquals(film3.getName(), filteredByDate.stream().skip(1).findFirst().get().getName());
+
+        // Проверка filteredByGenreAndDate
+        assertEquals(1, filteredByGenreAndDate.size());
+        assertEquals(film4.getName(), filteredByGenreAndDate.stream().findFirst().get().getName());
+
+        // Проверка withoutFilter
+        assertEquals(4, withoutFilter.size());
+        assertEquals(film1.getName(), withoutFilter.stream().findFirst().get().getName());
+        assertEquals(film2.getName(), withoutFilter.stream().skip(1).findFirst().get().getName());
+        assertEquals(film3.getName(), withoutFilter.stream().skip(2).findFirst().get().getName());
+        assertEquals(film4.getName(), withoutFilter.stream().skip(3).findFirst().get().getName());
     }
 }

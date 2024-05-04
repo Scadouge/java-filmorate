@@ -12,7 +12,7 @@ public interface FilmStorage extends CrudStorage<Film> {
 
     void removeLike(Film film, User user);
 
-    Collection<Film> getPopularByLikes(int max);
+    Collection<Film> getPopularByYearAndGenre(Integer count, Long genreId, String year);
 
     int getLikesCount(Film film);
 

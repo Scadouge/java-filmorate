@@ -53,9 +53,10 @@ public class FilmService {
         filmStorage.removeLike(filmStorage.get(filmId), userStorage.get(userId));
     }
 
-    public Collection<Film> getPopular(int count) {
-        log.debug("Получение списка популярных фильмов count={}", count);
-        return filmStorage.getPopularByLikes(count);
+    public Collection<Film> getPopularByYearAndGenre(Integer count, Long genreId, String year) {
+        log.debug("Получение списка популярных фильмов count={} с фильтрацией по genreId={} и year={}",
+                count, genreId, year);
+        return filmStorage.getPopularByYearAndGenre(count, genreId, year);
     }
 
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {

@@ -143,16 +143,38 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getPopularByLikes(int count) {
-        log.debug("Получение списка популярных фильмов count={}", count);
-        String sql = "SELECT cl.count, f.*, m.name AS mpa_name, m.description AS mpa_description " +
-                "FROM films AS f " +
-                "LEFT JOIN (SELECT COUNT(*) AS count, film_id FROM likes GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT ?) " +
-                "AS cl ON cl.film_id= f.film_id " +
-                "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
-                "ORDER BY cl.count DESC " +
-                "LIMIT ?";
-        List<Film> unfinishedFilms = jdbcTemplate.query(sql, (rs, rowNum) -> FilmMapper.createFilm(rs), count, count);
+    public Collection<Film> getPopularByYearAndGenre(Integer count, Long genreId, String year) {
+        String filter = "";
+        List<Object> parameters;
+
+        if (genreId != null && year != null) {
+            filter = "WHERE EXTRACT(YEAR FROM CAST(f.release_date AS date)) = ? AND g.genre_id = ? ";
+            parameters = List.of(year, genreId, count);
+        } else if (genreId != null) {
+            filter = "WHERE g.genre_id = ? ";
+            parameters = List.of(genreId, count);
+        } else if (year != null) {
+            filter = "WHERE EXTRACT(YEAR FROM CAST(f.release_date AS date)) = ? ";
+            parameters = List.of(year, count);
+        } else {
+            parameters = List.of(count);
+        }
+
+        String sqlSelectQuery = String.format(
+                "SELECT f.*, m.name mpa_name, m.description mpa_description " +
+                        "FROM public.films f " +
+                        "LEFT JOIN public.mpa m ON f.mpa_id = m.mpa_id " +
+                        "LEFT JOIN public.film_genre fg ON f.film_id = fg.film_id " +
+                        "LEFT JOIN public.genre g ON fg.genre_id = g.genre_id " +
+                        "LEFT JOIN (SELECT l.film_id, COUNT(l.user_id) likes_count " +
+                        "FROM public.likes l " +
+                        "GROUP BY l.film_id) t ON f.film_id = t.film_id " +
+                        "%s" +
+                        "ORDER BY t.likes_count DESC " +
+                        "LIMIT ?", filter);
+
+        List<Film> unfinishedFilms = jdbcTemplate.query(sqlSelectQuery, (rs, rowNum) ->
+                FilmMapper.createFilm(rs), parameters.toArray());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
         return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
     }
