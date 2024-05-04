@@ -34,7 +34,6 @@ public class DbReviewStorage implements ReviewStorage {
         params.put("is_positive", review.getIsPositive());
         params.put("user_id", review.getUserId());
         params.put("film_id", review.getFilmId());
-        params.put("useful", review.getUseful());
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
         Review updatedReview = review.toBuilder().reviewId(id).build();
         log.debug("Добавление отзыва review={}", updatedReview);
