@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
 import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.dao.event.DbEventStorage;
 import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
@@ -20,6 +21,7 @@ import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.EventService;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import utils.TestFilmUtils;
@@ -45,9 +47,10 @@ public class SlopeOneTest {
         GenreStorage genreStorage = new DbGenreStorage(jdbcTemplate);
         FilmStorage filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage, directorStorage);
         UserStorage userStorage = new DbUserStorage(jdbcTemplate);
+        EventService eventService = new EventService(new DbEventStorage(jdbcTemplate), userStorage);
 
-        filmService = new FilmService(filmStorage, userStorage, directorStorage);
-        userService = new UserService(userStorage, filmService);
+        filmService = new FilmService(filmStorage, userStorage, directorStorage, eventService);
+        userService = new UserService(userStorage, filmService, eventService);
     }
 
     private Film getNewFilm() {

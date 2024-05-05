@@ -19,8 +19,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
-    private final EventService eventService;
     private final FilmService filmService;
+    private final EventService eventService;
 
     public User addUser(User user) {
         log.debug("Добавление пользователя user={}", user);
