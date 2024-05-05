@@ -10,6 +10,8 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -81,5 +83,10 @@ public class FilmService {
     public Collection<Film> searchFilms(String query, String by) {
         log.debug("Получение списка фильмов по поисковому запросу query={}, by={}", query, by);
         return filmStorage.searchFilms(query, by);
+    }
+
+    public Map<Long, List<Film>> getLikedFilms() {
+        log.debug("Получение списка понравившихся фильмов для каждого пользователя");
+        return filmStorage.getLikedFilms();
     }
 }

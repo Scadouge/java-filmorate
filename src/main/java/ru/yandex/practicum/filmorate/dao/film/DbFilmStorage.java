@@ -19,17 +19,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -267,6 +257,33 @@ public class DbFilmStorage implements FilmStorage {
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
+    }
+
+    @Override
+    public Map<Long, List<Film>> getLikedFilms() {
+        log.debug("Получение списка понравившихся фильмов для каждого пользователя");
+        Map<Long, List<Film>> usersFilms = new HashMap<>();
+        String sql = "SELECT l.user_id, f.*, mpa.name AS mpa_name, mpa.description AS mpa_description " +
+                "FROM likes AS l " +
+                "LEFT JOIN films AS f ON l.film_id = f.film_id " +
+                "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id ";
+        jdbcTemplate.query(sql, (rs, rowNum) -> {
+            if (!usersFilms.containsKey(rs.getLong("user_id"))) {
+                usersFilms.put(rs.getLong("user_id"), new ArrayList<>());
+            }
+            usersFilms.get(rs.getLong("user_id"))
+                    .add(FilmMapper.createFilm(rs).toBuilder().build());
+            return null;
+        });
+
+        Set<Long> filmsId = usersFilms.values().stream()
+                .flatMap(films -> films.stream().map(Film::getId))
+                .collect(Collectors.toSet());
+        Map<Long, Set<Genre>> filmsGenres = getFilmGenreMapping(filmsId);
+        Map<Long, Set<Director>> filmsDirectors = getFilmDirectorMapping(filmsId);
+
+        usersFilms.replaceAll((k, v) -> new ArrayList<>(FilmMapper.mapFilms(usersFilms.get(k), filmsGenres, filmsDirectors)));
+        return usersFilms;
     }
 
     private void setGenres(Film film) {
