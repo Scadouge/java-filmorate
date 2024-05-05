@@ -39,7 +39,7 @@ public class DbEventStorage implements EventStorage {
                 "where user_id = ? " +
                 "order by event_timestamp ";
 
-        List<Event> events = jdbcTemplate.query(sqlQueryFindAllById, EventMapper::mapRowToEvent, idUser);
+        List<Event> events = jdbcTemplate.query(sqlQueryFindAllById, EventMapper::createEvent, idUser);
         log.info("Получен список событий пользователя с ID = {}", idUser);
         return events;
     }

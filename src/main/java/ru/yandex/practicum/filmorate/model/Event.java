@@ -1,8 +1,10 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,18 +12,23 @@ import java.util.Map;
 @Getter
 @Setter
 public class Event {
+    @NotNull
+    Long timestamp;
 
-    private Long timestamp;
+    @EqualsAndHashCode.Include
+    Long eventId;
 
-    private Long eventId;
+    @NotNull
+    Long userId;
 
-    private Long userId;
+    @NotNull
+    Long entityId;
 
-    private Long entityId;
+    @NotNull
+    EventType eventType;
 
-    private EventType eventType;
-
-    private EventOperation operation;
+    @NotNull
+    EventOperation operation;
 
     public Event() {
 
