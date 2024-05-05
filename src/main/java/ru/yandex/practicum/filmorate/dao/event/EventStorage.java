@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface EventStorage {
 
-    void saveOne(Event event);
+    Event put(Event event);
 
-    List<Event> findAllById(Long idUser);
+    List<Event> findAllById(Long userId);
 }

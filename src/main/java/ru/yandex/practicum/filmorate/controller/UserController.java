@@ -30,6 +30,9 @@ public class UserController {
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
         log.info("Обновление пользователя {}", user);
+        if (user.getId() == null) {
+            throw new ValidationException("Не указан id пользователя");
+        }
         return userService.updateUser(user);
     }
 
@@ -89,6 +92,7 @@ public class UserController {
 
     @GetMapping("/{id}/feed")
     public List<Event> getFeed(@PathVariable Long id) {
+        log.info("Получение списка событий для пользователя id={}", id);
         return userService.getFeed(id);
     }
 }

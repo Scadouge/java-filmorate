@@ -42,6 +42,7 @@ public class DbFilmStorage implements FilmStorage {
         params.put("description", film.getDescription());
         params.put("duration", film.getDuration());
         params.put("release_date", Date.valueOf(film.getReleaseDate()));
+        params.put("time", Date.valueOf(film.getReleaseDate()));
         if (film.getMpa() != null) {
             try {
                 mpaStorage.get(film.getMpa().getId());

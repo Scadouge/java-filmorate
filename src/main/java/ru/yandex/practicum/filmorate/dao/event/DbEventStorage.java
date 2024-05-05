@@ -7,7 +7,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Event;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @Slf4j
@@ -16,31 +18,25 @@ public class DbEventStorage implements EventStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public void saveOne(Event event) {
+    public Event put(Event event) {
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("events")
                 .usingGeneratedKeyColumns("event_id");
-
-        Long eventId = simpleJdbcInsert.executeAndReturnKey(event.toMap()).longValue();
-        log.info("Создано событие c ID = {} от пользователя с ID = {}",
-                eventId,
-                event.getUserId());
+        Map<String, Object> params = new HashMap<>();
+        params.put("user_id", event.getUserId());
+        params.put("entity_id", event.getEntityId());
+        params.put("event_timestamp", event.getTimestamp());
+        params.put("event_type", event.getEventType().toString());
+        params.put("event_operation", event.getOperation().toString());
+        Long eventId = simpleJdbcInsert.executeAndReturnKey(params).longValue();
+        log.debug("Создано событие c id = {} от пользователя с id = {}", eventId, event.getUserId());
+        return event.toBuilder().eventId(eventId).build();
     }
 
     @Override
-    public List<Event> findAllById(Long idUser) {
-        String sqlQueryFindAllById = "select event_id, " +
-                "       user_id, " +
-                "       entity_id, " +
-                "       event_timestamp, " +
-                "       event_type, " +
-                "       event_operation " +
-                "from events " +
-                "where user_id = ? " +
-                "order by event_timestamp ";
-
-        List<Event> events = jdbcTemplate.query(sqlQueryFindAllById, EventMapper::createEvent, idUser);
-        log.info("Получен список событий пользователя с ID = {}", idUser);
-        return events;
+    public List<Event> findAllById(Long userId) {
+        log.debug("Получен список событий пользователя с id = {}", userId);
+        String sqlQueryFindAllById = "SELECT * FROM events WHERE user_id = ? ORDER BY event_timestamp";
+        return jdbcTemplate.query(sqlQueryFindAllById, (rs, rowNum) -> EventMapper.createEvent(rs), userId);
     }
 }

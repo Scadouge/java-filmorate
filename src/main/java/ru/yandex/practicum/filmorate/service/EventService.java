@@ -4,12 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.event.EventStorage;
-import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.EventOperation;
 import ru.yandex.practicum.filmorate.model.EventType;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -18,77 +18,63 @@ import java.util.List;
 public class EventService {
     private final EventStorage eventStorage;
     private final UserStorage userStorage;
-    private final FilmStorage filmStorage;
 
-    public List<Event> findEventsByUserId(Long idUser) {
-        userStorage.get(idUser);
-        log.info("поиск всех событый для пользователя с id={}", idUser);
-        return eventStorage.findAllById(idUser);
+    public List<Event> findEventsByUserId(Long userId) {
+        log.debug("Поиск всех событый для пользователя с id={}", userId);
+        userStorage.get(userId);
+        return eventStorage.findAllById(userId);
     }
 
-    public void createAddLikeEvent(Long idUser, Long idFilm) {
-
-        Event event = createEvent(idUser, idFilm,
-                EventType.LIKE, EventOperation.ADD);
-        eventStorage.saveOne(event);
-        log.info("пользователь с id={} поставил лайк фильму с fid={}", idUser, idFilm);
+    public void createAddLikeEvent(Long userId, Long filmId) {
+        Event event = createEvent(userId, filmId, EventType.LIKE, EventOperation.ADD);
+        eventStorage.put(event);
+        log.debug("Событие: Пользователь с id={} поставил лайк фильму с id={}", userId, filmId);
     }
 
-    public void createRemoveLikeEvent(Long idUser, Long idFilm) {
-        Event event = createEvent(idUser, idFilm,
-                EventType.LIKE, EventOperation.REMOVE);
-        eventStorage.saveOne(event);
-        log.info("пользователь с id={} убрал лайк с фильма с fid={}", idUser, idFilm);
+    public void createRemoveLikeEvent(Long userId, Long filmId) {
+        Event event = createEvent(userId, filmId, EventType.LIKE, EventOperation.REMOVE);
+        eventStorage.put(event);
+        log.debug("Событие: Пользователь с id={} убрал лайк с фильма с id={}", userId, filmId);
     }
 
-    public void createAddReviewEvent(Long idUser, Long idFilm) {
-        userStorage.get(idUser);
-        filmStorage.get(idFilm);
-        Event event = createEvent(idUser, idFilm, EventType.REVIEW,
-                EventOperation.ADD);
-        eventStorage.saveOne(event);
-        log.info("пользователь с id={} создал ревью с fid={}", idUser, event.getEventId());
-
+    public void createAddReviewEvent(Long userId, Long filmId) {
+        Event event = createEvent(userId, filmId, EventType.REVIEW, EventOperation.ADD);
+        eventStorage.put(event);
+        log.debug("Событие: Пользователь с id={} создал ревью с id={}", userId, event.getEventId());
     }
 
-    public void createRemoveReviewEvent(Long idUser, Long reviewId) {
-        userStorage.get(idUser);
-        Event event = createEvent(idUser, reviewId, EventType.REVIEW,
-                EventOperation.REMOVE);
-        eventStorage.saveOne(event);
-        log.info("пользователь с id={} удалил ревью с fid={}", idUser, reviewId);
+    public void createRemoveReviewEvent(Long userId, Long reviewId) {
+        Event event = createEvent(userId, reviewId, EventType.REVIEW, EventOperation.REMOVE);
+        eventStorage.put(event);
+        log.debug("Событие: Пользователь с id={} удалил ревью с id={}", userId, reviewId);
     }
 
-    public void createUpdateReviewEvent(Long idUser, Long reviewId) {
-        userStorage.get(idUser);
-        Event event = createEvent(idUser, reviewId, EventType.REVIEW,
-                EventOperation.UPDATE);
-        eventStorage.saveOne(event);
-        log.info("пользователь с id={} изменил ревью с fid={}", idUser, reviewId);
+    public void createUpdateReviewEvent(Long userId, Long reviewId) {
+        Event event = createEvent(userId, reviewId, EventType.REVIEW, EventOperation.UPDATE);
+        eventStorage.put(event);
+        log.debug("Событие: Пользователь с id={} изменил ревью с id={}", userId, reviewId);
     }
 
-    public void createAddFriend(Long idUser, Long idFriend) {
-        Event event = createEvent(idUser, idFriend,
-                EventType.FRIEND, EventOperation.ADD);
-        eventStorage.saveOne(event);
-        log.info("пользователь с id={} добавил в друзья пользователя с fid={}", idUser, idFriend);
+    public void createAddFriend(Long userId, Long friendId) {
+        Event event = createEvent(userId, friendId, EventType.FRIEND, EventOperation.ADD);
+        eventStorage.put(event);
+        log.debug("Событие: Пользователь с id={} добавил в друзья пользователя с id={}", userId, friendId);
     }
 
-    public void createRemoveFriend(Long idUser, Long idFriend) {
-        Event event = createEvent(idUser, idFriend,
-                EventType.FRIEND, EventOperation.REMOVE);
-        eventStorage.saveOne(event);
-        log.info("пользователь с id={} удалил из друзей пользователя с fid={}", idUser, idFriend);
+    public void createRemoveFriend(Long userId, Long friendId) {
+        Event event = createEvent(userId, friendId, EventType.FRIEND, EventOperation.REMOVE);
+        eventStorage.put(event);
+        log.debug("Событие: Пользователь с id={} удалил из друзей пользователя с id={}", userId, friendId);
     }
 
-    private Event createEvent(Long idUser, Long idEntity, EventType eventType, EventOperation eventOperation) {
-        log.info("создаем для пользователя с id={} событие с fid={}", idUser, idEntity);
-        return new
-                Event.Builder()
-                .userId(idUser)
-                .entityId(idEntity)
+    private Event createEvent(Long userId, Long entityId, EventType eventType, EventOperation eventOperation) {
+        log.debug("Создаем для пользователя с id={} событие с id={}", userId, entityId);
+        return Event.builder()
+                .userId(userId)
+                .entityId(entityId)
                 .eventType(eventType)
-                .eventOperation(eventOperation)
+                .operation(eventOperation)
+                .timestamp(Instant.now().toEpochMilli())
                 .build();
     }
 }

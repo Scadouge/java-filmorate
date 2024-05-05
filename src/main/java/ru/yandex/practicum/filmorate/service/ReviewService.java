@@ -23,8 +23,9 @@ public class ReviewService {
         log.debug("Добавление отзыва review={}", review);
         userStorage.get(review.getUserId());
         filmStorage.get(review.getFilmId());
-        eventService.createAddReviewEvent(review.getUserId(), review.getFilmId());
-        return reviewStorage.put(review);
+        Review newReview = reviewStorage.put(review);
+        eventService.createAddReviewEvent(review.getUserId(), newReview.getReviewId());
+        return newReview;
     }
 
     public Review getReview(Long id) {
