@@ -20,6 +20,7 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final DirectorStorage directorStorage;
+    private final EventService eventService;
 
     public Film addFilm(Film film) {
         log.debug("Добавление фильма film={}", film);
@@ -48,11 +49,13 @@ public class FilmService {
     public void addLike(Long filmId, Long userId) {
         log.debug("Добавление лайка filmId={}, userId={}", filmId, userId);
         filmStorage.addLike(filmStorage.get(filmId), userStorage.get(userId));
+        eventService.createAddLikeEvent(userId, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) {
         log.debug("Удаление лайка filmId={}, userId={}", filmId, userId);
         filmStorage.removeLike(filmStorage.get(filmId), userStorage.get(userId));
+        eventService.createRemoveLikeEvent(userId, filmId);
     }
 
     public Collection<Film> getPopularByYearAndGenre(Integer count, Long genreId, String year) {

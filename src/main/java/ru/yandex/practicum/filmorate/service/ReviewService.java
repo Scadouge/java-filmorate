@@ -17,12 +17,15 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final EventService eventService;
 
     public Review addReview(Review review) {
         log.debug("Добавление отзыва review={}", review);
         userStorage.get(review.getUserId());
         filmStorage.get(review.getFilmId());
-        return reviewStorage.put(review);
+        Review newReview = reviewStorage.put(review);
+        eventService.createAddReviewEvent(review.getUserId(), newReview.getReviewId());
+        return newReview;
     }
 
     public Review getReview(Long id) {
@@ -38,12 +41,16 @@ public class ReviewService {
     public Review updateReview(Review review) {
         log.info("Обновление отзыва review={}", review);
         reviewStorage.get(review.getReviewId());
+        Long userId = review.getReviewId();
+        Long reviewId = review.getReviewId();
+        eventService.createUpdateReviewEvent(userId, reviewId);
         return reviewStorage.update(review);
     }
 
     public Review deleteReview(Long reviewId) {
         log.debug("Удаление отзыва c id={}", reviewId);
         Review review = getReview(reviewId);
+        eventService.createRemoveReviewEvent(review.getUserId(), reviewId);
         return reviewStorage.delete(review);
     }
 
