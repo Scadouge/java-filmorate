@@ -9,14 +9,13 @@ import java.sql.SQLException;
 
 public class EventMapper {
 
-    public static Event mapRowToEvent(ResultSet resultSet, int rowNum) throws SQLException {
+    public static Event createEvent(ResultSet resultSet, int rowNum) throws SQLException {
         return new Event.Builder()
-                .eventId(resultSet.getLong("EVENT_ID"))
-                .entityId(resultSet.getLong("ENTITY_ID"))
-                .userId(resultSet.getLong("USER_ID"))
-                //.timestamp(resultSet.getLong("EVENT_TIMESTAMP"))
-                .eventType(EventType.valueOf(resultSet.getString("EVENT_TYPE")))
-                .eventOperation(EventOperation.valueOf(resultSet.getString("EVENT_OPERATION")))
+                .eventId(resultSet.getLong("event_id"))
+                .userId(resultSet.getLong("user_id"))
+                .entityId(resultSet.getLong("entity_id"))
+                .eventType(EventType.valueOf(resultSet.getString("event_type")))
+                .eventOperation(EventOperation.valueOf(resultSet.getString("event_operation")))
                 .build();
     }
 }
