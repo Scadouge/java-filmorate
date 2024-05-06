@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mark;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import utils.*;
 
@@ -172,5 +173,15 @@ class ValidationTest {
                 .toBuilder().name("")
                 .build()))
                 .hasSize(1);
+    }
+
+    @Test
+    void markValidationTest() {
+        assertThat(validator.validate(Mark.builder().filmId(1L).userId(1L).rating(10).build())).isEmpty();
+        assertThat(validator.validate(Mark.builder().filmId(1L).userId(1L).rating(11).build())).hasSize(1);
+        assertThat(validator.validate(Mark.builder().filmId(1L).userId(1L).rating(0).build())).hasSize(1);
+        assertThat(validator.validate(Mark.builder().filmId(1L).userId(1L).rating(-1).build())).hasSize(1);
+        assertThat(validator.validate(Mark.builder().filmId(1L).userId(1L).build())).hasSize(1);
+        assertThat(validator.validate(Mark.builder().build())).hasSize(1);
     }
 }

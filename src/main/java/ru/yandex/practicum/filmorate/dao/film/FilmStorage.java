@@ -10,13 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 public interface FilmStorage extends CrudStorage<Film> {
-    void addLike(Film film, User user);
+    void addMark(Film film, User user, Integer rating);
 
-    void removeLike(Film film, User user);
+    void removeMark(Film film, User user);
 
     Collection<Film> getPopularByYearAndGenre(Integer count, Long genreId, String year);
-
-    int getLikesCount(Film film);
 
     Collection<Film> getFavouriteFilms(User user);
 

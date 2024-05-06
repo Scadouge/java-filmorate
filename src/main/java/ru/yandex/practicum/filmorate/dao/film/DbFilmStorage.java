@@ -120,15 +120,16 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public void addLike(Film film, User user) {
-        log.debug("Добавление лайка filmId={}, userId={}", film.getId(), user.getId());
-        jdbcTemplate.update("MERGE INTO likes KEY(film_id, user_id) VALUES (?, ?)", film.getId(), user.getId());
+    public void addMark(Film film, User user, Integer rating) {
+        log.debug("Добавление оценки id={}, userId={}, rating={}", film.getId(), user.getId(), rating);
+        jdbcTemplate.update("MERGE INTO marks KEY(film_id, user_id, rating) " +
+                "VALUES (?, ?, ?)", film.getId(), user.getId(), rating);
     }
 
     @Override
-    public void removeLike(Film film, User user) {
-        log.debug("Удаление лайка filmId={}, userId={}", film.getId(), user.getId());
-        jdbcTemplate.update("DELETE FROM likes WHERE film_id = ? AND user_id = ?",
+    public void removeMark(Film film, User user) {
+        log.debug("Удаление оценки id={}, userId={}", film.getId(), user.getId());
+        jdbcTemplate.update("DELETE FROM marks WHERE film_id = ? AND user_id = ?",
                 film.getId(), user.getId());
     }
 
@@ -167,14 +168,6 @@ public class DbFilmStorage implements FilmStorage {
                 FilmMapper.createFilm(rs), parameters.toArray());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
         return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
-    }
-
-    @Override
-    public int getLikesCount(Film film) {
-        log.debug("Получение количества лайков у фильма id={}", film.getId());
-        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) AS count FROM likes WHERE film_id = ?",
-                (rs, rowNum) -> rs.getInt("count"), film.getId());
-        return Objects.requireNonNullElse(count, 0);
     }
 
     @Override

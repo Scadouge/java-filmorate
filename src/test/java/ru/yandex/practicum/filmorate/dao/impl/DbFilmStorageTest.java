@@ -154,6 +154,11 @@ class DbFilmStorageTest {
         assertThrows(ItemNotFoundException.class, () -> filmStorage.get(TestFilmUtils.getNonExistedFilm().getId()));
     }
 
+    private int getLikesCount(Film film) {
+        return Objects.requireNonNullElse(jdbcTemplate.queryForObject("SELECT COUNT(*) AS count FROM likes WHERE film_id = ?",
+                (rs, rowNum) -> rs.getInt("count"), film.getId()), 0);
+    }
+
     @Test
     void testAddLike() {
         final Film newFilm = filmStorage.put(getNewFilledFilm());
@@ -169,9 +174,9 @@ class DbFilmStorageTest {
         assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
         assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
 
-        final int likes = filmStorage.getLikesCount(newFilm);
+        final int likes = getLikesCount(newFilm);
 
-        assertEquals(0, filmStorage.getLikesCount(TestFilmUtils.getNonExistedFilm()));
+        assertEquals(0, getLikesCount(TestFilmUtils.getNonExistedFilm()));
         assertEquals(1, likes);
     }
 
@@ -182,13 +187,13 @@ class DbFilmStorageTest {
 
         filmStorage.addLike(newFilm, newUser);
 
-        assertEquals(1, filmStorage.getLikesCount(newFilm));
+        assertEquals(1, getLikesCount(newFilm));
         assertDoesNotThrow(() -> filmStorage.removeLike(newFilm, TestUserUtils.getNewNonExistentUser()));
-        assertEquals(1, filmStorage.getLikesCount(newFilm));
+        assertEquals(1, getLikesCount(newFilm));
 
         filmStorage.removeLike(newFilm, newUser);
 
-        assertEquals(0, filmStorage.getLikesCount(newFilm));
+        assertEquals(0, getLikesCount(newFilm));
         assertDoesNotThrow(() -> filmStorage.removeLike(TestFilmUtils.getNonExistedFilm(), newUser));
     }
 

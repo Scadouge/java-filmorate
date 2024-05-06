@@ -46,15 +46,15 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
-    public void addLike(Long filmId, Long userId) {
-        log.debug("Добавление лайка filmId={}, userId={}", filmId, userId);
-        filmStorage.addLike(filmStorage.get(filmId), userStorage.get(userId));
+    public void addMark(Long filmId, Long userId, Integer rating) {
+        log.debug("Добавление оценки id={}, userId={}, rating={}", filmId, userId, rating);
+        filmStorage.addMark(filmStorage.get(filmId), userStorage.get(userId), rating);
         eventService.createAddLikeEvent(userId, filmId);
     }
 
-    public void removeLike(Long filmId, Long userId) {
-        log.debug("Удаление лайка filmId={}, userId={}", filmId, userId);
-        filmStorage.removeLike(filmStorage.get(filmId), userStorage.get(userId));
+    public void removeMark(Long filmId, Long userId) {
+        log.debug("Удаление оценки id={}, userId={}", filmId, userId);
+        filmStorage.removeMark(filmStorage.get(filmId), userStorage.get(userId));
         eventService.createRemoveLikeEvent(userId, filmId);
     }
 
