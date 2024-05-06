@@ -139,10 +139,14 @@ public class DbFilmStorage implements FilmStorage {
         List<Object> parameters;
 
         if (genreId != null && year != null) {
-            filter = "WHERE EXTRACT(YEAR FROM CAST(f.release_date AS date)) = ? AND g.genre_id = ? ";
+            filter = "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
+                    "LEFT JOIN genre g ON fg.genre_id = g.genre_id " +
+                    "WHERE EXTRACT(YEAR FROM CAST(f.release_date AS date)) = ? AND g.genre_id = ? ";
             parameters = List.of(year, genreId, count);
         } else if (genreId != null) {
-            filter = "WHERE g.genre_id = ? ";
+            filter = "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
+                    "LEFT JOIN genre g ON fg.genre_id = g.genre_id " +
+                    "WHERE g.genre_id = ? ";
             parameters = List.of(genreId, count);
         } else if (year != null) {
             filter = "WHERE EXTRACT(YEAR FROM CAST(f.release_date AS date)) = ? ";
@@ -152,16 +156,13 @@ public class DbFilmStorage implements FilmStorage {
         }
 
         String sqlSelectQuery = String.format(
-                "SELECT f.*, m.name mpa_name, m.description mpa_description " +
-                        "FROM public.films f " +
-                        "LEFT JOIN public.mpa m ON f.mpa_id = m.mpa_id " +
-                        "LEFT JOIN public.film_genre fg ON f.film_id = fg.film_id " +
-                        "LEFT JOIN public.genre g ON fg.genre_id = g.genre_id " +
-                        "LEFT JOIN (SELECT l.film_id, COUNT(l.user_id) likes_count " +
-                        "FROM public.likes l " +
-                        "GROUP BY l.film_id) t ON f.film_id = t.film_id " +
+                "SELECT f.*, m.name mpa_name, m.description mpa_description FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.mpa_id " +
+                        "LEFT JOIN (SELECT AVG(rating) AS avg, film_id FROM marks GROUP BY film_id) " +
+                        "AS mk ON mk.film_id= f.film_id " +
                         "%s" +
-                        "ORDER BY t.likes_count DESC " +
+                        "GROUP BY f.film_id " +
+                        "ORDER BY mk.avg DESC " +
                         "LIMIT ?", filter);
 
         List<Film> unfinishedFilms = jdbcTemplate.query(sqlSelectQuery, (rs, rowNum) ->
@@ -173,14 +174,13 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public Collection<Film> getFavouriteFilms(User user) {
         log.debug("Получение списка понравившихся пользователю user={} фильмов, отсортированных по популярности", user);
-        String sqlSelectQuery = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description, " +
-                "l.user_id, t.likes_count FROM likes l " +
-                "LEFT JOIN (SELECT l.film_id, COUNT(l.user_id) AS likes_count FROM likes l " +
-                "GROUP BY l.film_id) AS t ON t.film_id = l.film_id " +
-                "LEFT JOIN films f ON l.film_id = f.film_id " +
-                "LEFT JOIN mpa m ON f.mpa_id = m.mpa_id " +
-                "WHERE l.user_id = ? " +
-                "ORDER BY t.likes_count DESC";
+        String sqlSelectQuery =
+                "SELECT mk.avg, f.*, m.name AS mpa_name, m.description AS mpa_description FROM marks AS mks " +
+                        "LEFT JOIN films AS f ON f.film_id = mks.film_id " +
+                        "LEFT JOIN mpa AS m ON m.mpa_id = f.mpa_id " +
+                        "LEFT JOIN (SELECT AVG(rating) AS avg, film_id FROM marks GROUP BY film_id) AS mk ON mk.film_id = mks.film_id " +
+                        "WHERE mks.user_id = ? " +
+                        "ORDER BY mk.avg DESC";
         List<Film> unfinishedFilms = jdbcTemplate.query(sqlSelectQuery, (rs, rowNum) ->
                 FilmMapper.createFilm(rs), user.getId());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
@@ -201,14 +201,15 @@ public class DbFilmStorage implements FilmStorage {
                         "ORDER BY f.release_date";
                 break;
             case "likes":
-                sql = "SELECT  COUNT(l.*) AS likes, f.*, m.name AS mpa_name, m.description AS mpa_description " +
+                sql = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
                         "FROM film_director AS fd " +
                         "LEFT JOIN films AS f ON f.film_id = fd.film_id " +
                         "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
-                        "LEFT JOIN likes AS l ON l.film_id = f.film_id " +
+                        "LEFT JOIN (SELECT AVG(rating) AS avg, film_id FROM marks GROUP BY film_id) " +
+                            "AS mk ON mk.film_id= f.film_id " +
                         "WHERE fd.director_id = ? " +
                         "GROUP BY f.film_id " +
-                        "ORDER BY likes DESC";
+                        "ORDER BY mk.avg DESC";
                 break;
             default:
                 throw new ValidationException("Неизвестный параметр сортировки sortBy=" + sortBy);
@@ -236,14 +237,14 @@ public class DbFilmStorage implements FilmStorage {
         if (searchBy.size() > 0 || split.length == 0) {
             throw new ValidationException("Неизвестные тэги поиска " + searchBy);
         }
-        String sb = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
-                "FROM films AS f " +
+        String sb = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description FROM films AS f " +
                 "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
                 "RIGHT JOIN(" +
                 String.join(" UNION ", filters) +
                 ") AS title ON title.film_id = f.film_id " +
-                "LEFT JOIN (SELECT COUNT(*) AS count, film_id FROM likes GROUP BY film_id) AS cl ON cl.film_id= f.film_id " +
-                "ORDER BY cl.count DESC";
+                "LEFT JOIN (SELECT AVG(rating) AS avg, film_id FROM marks GROUP BY film_id) " +
+                "AS mk ON mk.film_id= f.film_id " +
+                "ORDER BY mk.avg DESC";
         List<Film> unfinishedFilms = jdbcTemplate.query(sb,
                 (rs, rowNum) -> FilmMapper.createFilm(rs),
                 Collections.nCopies(filters.size(), "%" + query + "%").toArray());
