@@ -177,17 +177,17 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public Collection<Film> getCommonFilms(User user, User friend) {
         log.debug("Получение списка общих фильмов пользователей user={} и friend={}", user, friend);
-        String sqlSelectQuery = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description, t.likes_count " +
+        String sqlSelectQuery = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description, COUNT(l.user_id) AS likes_count " +
                 "FROM public.likes l " +
-                "LEFT JOIN (SELECT l.film_id, COUNT(l.user_id) AS likes_count " +
-                    "FROM public.likes l " +
-                    "GROUP BY l.film_id) AS t ON t.film_id = l.film_id " +
                 "LEFT JOIN public.films f ON l.film_id = f.film_id " +
                 "LEFT JOIN public.mpa m ON f.mpa_id = m.mpa_id " +
-                "WHERE l.user_id = ? OR l.user_id = ? " +
+                "WHERE l.film_id IN (SELECT l.film_id " +
+                    "FROM public.likes l " +
+                    "WHERE l.user_id = ? OR l.user_id = ? " +
+                    "GROUP BY l.film_id " +
+                    "HAVING COUNT(l.user_id) = 2) " +
                 "GROUP BY l.film_id " +
-                "HAVING COUNT(l.user_id) = 2 " +
-                "ORDER BY t.likes_count DESC";
+                "ORDER BY likes_count DESC";
         List<Film> unfinishedFilms = jdbcTemplate.query(sqlSelectQuery, (rs, rowNum) ->
                 FilmMapper.createFilm(rs), user.getId(), friend.getId());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
