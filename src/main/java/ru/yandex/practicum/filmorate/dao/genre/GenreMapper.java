@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class GenreMapper {
+    private GenreMapper() {
+    }
+
     public static Genre createGenre(ResultSet rs) throws SQLException {
         return Genre.builder()
                 .id(rs.getLong("genre_id"))

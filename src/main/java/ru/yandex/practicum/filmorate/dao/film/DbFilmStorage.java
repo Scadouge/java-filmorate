@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.film;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,29 +13,16 @@ import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.sql.Date;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
 @Repository
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class DbFilmStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenreStorage genreStorage;
@@ -188,18 +175,21 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getFavouriteFilms(User user) {
-        log.debug("Получение списка понравившихся пользователю user={} фильмов, отсортированных по популярности", user);
-        String sqlSelectQuery = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description, " +
-                "l.user_id, t.likes_count FROM likes l " +
-                "LEFT JOIN (SELECT l.film_id, COUNT(l.user_id) AS likes_count FROM likes l " +
-                "GROUP BY l.film_id) AS t ON t.film_id = l.film_id " +
-                "LEFT JOIN films f ON l.film_id = f.film_id " +
-                "LEFT JOIN mpa m ON f.mpa_id = m.mpa_id " +
-                "WHERE l.user_id = ? " +
-                "ORDER BY t.likes_count DESC";
+    public Collection<Film> getCommonFilms(User user, User friend) {
+        log.debug("Получение списка общих фильмов пользователей user={} и friend={}", user, friend);
+        String sqlSelectQuery = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description, COUNT(l.user_id) AS likes_count " +
+                "FROM public.likes l " +
+                "LEFT JOIN public.films f ON l.film_id = f.film_id " +
+                "LEFT JOIN public.mpa m ON f.mpa_id = m.mpa_id " +
+                "WHERE l.film_id IN (SELECT l.film_id " +
+                    "FROM public.likes l " +
+                    "WHERE l.user_id = ? OR l.user_id = ? " +
+                    "GROUP BY l.film_id " +
+                    "HAVING COUNT(l.user_id) = 2) " +
+                "GROUP BY l.film_id " +
+                "ORDER BY likes_count DESC";
         List<Film> unfinishedFilms = jdbcTemplate.query(sqlSelectQuery, (rs, rowNum) ->
-                FilmMapper.createFilm(rs), user.getId());
+                FilmMapper.createFilm(rs), user.getId(), friend.getId());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
         return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
     }
@@ -208,8 +198,14 @@ public class DbFilmStorage implements FilmStorage {
     public Collection<Film> getSortedDirectorFilms(Director director, String sortBy) {
         log.debug("Получение списка фильмов режиссера director={}, sortBy={}", director, sortBy);
         String sql;
-        switch (sortBy) {
-            case "year":
+        FilmSortBy sortByEnum;
+        try {
+            sortByEnum = FilmSortBy.valueOf(sortBy.toUpperCase());
+        } catch (Throwable e) {
+            throw new ValidationException(String.format("Неизвестный параметр сортировки sortBy=%s", sortBy));
+        }
+        switch (sortByEnum) {
+            case YEAR:
                 sql = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
                         "FROM film_director AS fd " +
                         "LEFT JOIN films AS f ON f.film_id = fd.film_id " +
@@ -217,7 +213,7 @@ public class DbFilmStorage implements FilmStorage {
                         "WHERE fd.director_id = ? " +
                         "ORDER BY f.release_date";
                 break;
-            case "likes":
+            case LIKES:
                 sql = "SELECT  COUNT(l.*) AS likes, f.*, m.name AS mpa_name, m.description AS mpa_description " +
                         "FROM film_director AS fd " +
                         "LEFT JOIN films AS f ON f.film_id = fd.film_id " +
@@ -228,7 +224,8 @@ public class DbFilmStorage implements FilmStorage {
                         "ORDER BY likes DESC";
                 break;
             default:
-                throw new ValidationException("Неизвестный параметр сортировки sortBy=" + sortBy);
+                throw new ValidationException(String.format("Неизвестный параметр сортировки sortBy=%s", sortBy));
+
         }
         List<Film> unfinishedFilms = jdbcTemplate.query(sql, (rs, rowNum) -> FilmMapper.createFilm(rs), director.getId());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
@@ -269,6 +266,33 @@ public class DbFilmStorage implements FilmStorage {
         return FilmMapper.mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
     }
 
+    @Override
+    public Map<Long, List<Film>> getLikedFilms() {
+        log.debug("Получение списка понравившихся фильмов для каждого пользователя");
+        Map<Long, List<Film>> usersFilms = new HashMap<>();
+        String sql = "SELECT l.user_id, f.*, mpa.name AS mpa_name, mpa.description AS mpa_description " +
+                "FROM likes AS l " +
+                "LEFT JOIN films AS f ON l.film_id = f.film_id " +
+                "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id ";
+        jdbcTemplate.query(sql, (rs, rowNum) -> {
+            if (!usersFilms.containsKey(rs.getLong("user_id"))) {
+                usersFilms.put(rs.getLong("user_id"), new ArrayList<>());
+            }
+            usersFilms.get(rs.getLong("user_id"))
+                    .add(FilmMapper.createFilm(rs).toBuilder().build());
+            return null;
+        });
+
+        Set<Long> filmsId = usersFilms.values().stream()
+                .flatMap(films -> films.stream().map(Film::getId))
+                .collect(Collectors.toSet());
+        Map<Long, Set<Genre>> filmsGenres = getFilmGenreMapping(filmsId);
+        Map<Long, Set<Director>> filmsDirectors = getFilmDirectorMapping(filmsId);
+
+        usersFilms.replaceAll((k, v) -> new ArrayList<>(FilmMapper.mapFilms(usersFilms.get(k), filmsGenres, filmsDirectors)));
+        return usersFilms;
+    }
+
     private void setGenres(Film film) {
         log.debug("Запись жанров фильма id={}", film.getId());
         Collection<Long> existedGenreIds = genreStorage.get(film.getGenres()
@@ -277,7 +301,7 @@ public class DbFilmStorage implements FilmStorage {
         Optional<Long> missingGenreId = film.getGenres().stream()
                 .map(Genre::getId).filter(id -> !existedGenreIds.contains(id)).findFirst();
         if (missingGenreId.isPresent()) {
-            throw new ValidationException("Несуществующий жанр id=" + missingGenreId.get());
+            throw new ValidationException(String.format("Несуществующий жанр id=%s", missingGenreId.get()));
         }
         jdbcTemplate.update("DELETE FROM film_genre WHERE film_id = ?",
                 film.getId());
@@ -299,7 +323,7 @@ public class DbFilmStorage implements FilmStorage {
         Optional<Long> missingDirectorId = film.getDirectors().stream()
                 .map(Director::getId).filter(id -> !existedDirectorIds.contains(id)).findFirst();
         if (missingDirectorId.isPresent()) {
-            throw new ValidationException("Несуществующий режиссер id=" + missingDirectorId.get());
+            throw new ValidationException(String.format("Несуществующий режиссер id=%s", missingDirectorId.get()));
         }
         jdbcTemplate.update("DELETE FROM film_director WHERE film_id = ?",
                 film.getId());

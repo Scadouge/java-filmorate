@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -29,6 +30,9 @@ public class UserController {
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
         log.info("Обновление пользователя {}", user);
+        if (user.getId() == null) {
+            throw new ValidationException("Не указан id пользователя");
+        }
         return userService.updateUser(user);
     }
 
@@ -80,8 +84,15 @@ public class UserController {
         return userService.deleteUser(userId);
     }
 
+    @GetMapping("/{id}/recommendations")
+    public Collection<Film> getRecommendations(@PathVariable Long id) {
+        log.info("Получение списка рекомендаций для пользователя id={}", id);
+        return userService.getRecommendedFilms(id);
+    }
+
     @GetMapping("/{id}/feed")
     public List<Event> getFeed(@PathVariable Long id) {
+        log.info("Получение списка событий для пользователя id={}", id);
         return userService.getFeed(id);
     }
 }

@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS likes, film_genre, friendship, genre, films, mpa, users, director, film_director,
-events, reviews, review_rated ;
+    events, reviews, review_rated;
 
 CREATE TABLE IF NOT EXISTS users
 (
@@ -85,23 +85,22 @@ CREATE TABLE IF NOT EXISTS film_director
 CREATE TABLE IF NOT EXISTS events
 (
     event_id        INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-
-    user_id         INTEGER                            NOT NULL,
-    entity_id       INTEGER                            NOT NULL,
-    event_timestamp DOUBLE                            NOT NULL,
-    event_type      ENUM ('LIKE', 'REVIEW', 'FRIEND') NOT NULL,
-    event_operation ENUM ('REMOVE', 'ADD', 'UPDATE')  NOT NULL,
+    user_id         INTEGER NOT NULL,
+    entity_id       INTEGER NOT NULL,
+    event_timestamp BIGINT  NOT NULL,
+    event_type      VARCHAR NOT NULL,
+    event_operation VARCHAR NOT NULL,
 
     FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS reviews
 (
-    review_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    content VARCHAR NOT NULL,
+    review_id   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    content     VARCHAR NOT NULL,
     is_positive BOOLEAN NOT NULL,
-    user_id INTEGER,
-    film_id INTEGER,
+    user_id     INTEGER,
+    film_id     INTEGER,
 
     FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
     FOREIGN KEY (film_id) REFERENCES films (film_id) ON DELETE CASCADE
@@ -110,8 +109,8 @@ CREATE TABLE IF NOT EXISTS reviews
 CREATE TABLE IF NOT EXISTS review_rated
 (
     review_id INTEGER,
-    user_id INTEGER,
-    rated INTEGER NOT NULL,
+    user_id   INTEGER,
+    rated     INTEGER NOT NULL,
 
     PRIMARY KEY (review_id, user_id),
     FOREIGN KEY (review_id) REFERENCES reviews (review_id) ON DELETE CASCADE,

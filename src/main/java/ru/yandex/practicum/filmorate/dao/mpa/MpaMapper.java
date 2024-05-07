@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class MpaMapper {
+    private MpaMapper() {
+    }
+
     public static Mpa createRating(ResultSet rs) throws SQLException {
         return Mpa.builder()
                 .id(rs.getLong("mpa_id"))

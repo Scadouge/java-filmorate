@@ -10,6 +10,8 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -50,6 +52,7 @@ public class FilmService {
         eventService.createAddLikeEvent(userId, filmId);
     }
 
+
     public void removeLike(Long filmId, Long userId) {
         log.debug("Удаление лайка filmId={}, userId={}", filmId, userId);
         filmStorage.removeLike(filmStorage.get(filmId), userStorage.get(userId));
@@ -63,11 +66,8 @@ public class FilmService {
     }
 
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
-        log.info("Получения списка общих фильмов пользователей с userId={} и friendId={}", userId, friendId);
-        Collection<Film> userFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(userId));
-        Collection<Film> friendFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(friendId));
-        userFavouriteFilms.retainAll(friendFavouriteFilms);
-        return userFavouriteFilms;
+        log.info("Получение списка общих фильмов пользователей с userId={} и friendId={}", userId, friendId);
+        return filmStorage.getCommonFilms(userStorage.get(userId), userStorage.get(friendId));
     }
 
     public Film deleteFilm(Long filmId) {
@@ -84,5 +84,10 @@ public class FilmService {
     public Collection<Film> searchFilms(String query, String by) {
         log.debug("Получение списка фильмов по поисковому запросу query={}, by={}", query, by);
         return filmStorage.searchFilms(query, by);
+    }
+
+    public Map<Long, List<Film>> getLikedFilms() {
+        log.debug("Получение списка понравившихся фильмов для каждого пользователя");
+        return filmStorage.getLikedFilms();
     }
 }

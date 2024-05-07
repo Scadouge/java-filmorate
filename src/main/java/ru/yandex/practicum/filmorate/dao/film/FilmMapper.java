@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FilmMapper {
+    private FilmMapper() {
+    }
 
     public static Set<Film> mapFilms(List<Film> films,
                                      Map<Long, Set<Genre>> genresMapping,
