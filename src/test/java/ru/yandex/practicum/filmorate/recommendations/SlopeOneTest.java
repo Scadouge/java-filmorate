@@ -104,6 +104,7 @@ public class SlopeOneTest {
         Collection<Film> rec = userService.getRecommendedFilms(firstUser.getId());
         assertThat(rec).isNotNull()
                 .usingRecursiveComparison()
+                .ignoringFields("rating")
                 .isEqualTo(new HashSet<>(List.of(secondFilm)));
     }
 }

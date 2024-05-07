@@ -52,7 +52,6 @@ public class FilmService {
         eventService.createAddLikeEvent(userId, filmId);
     }
 
-
     public void removeLike(Long filmId, Long userId) {
         log.debug("Удаление лайка filmId={}, userId={}", filmId, userId);
         filmStorage.removeLike(filmStorage.get(filmId), userStorage.get(userId));

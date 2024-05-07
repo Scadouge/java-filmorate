@@ -53,6 +53,7 @@ public class FilmMapper {
                 .duration(rs.getInt("duration"))
                 .releaseDate(rs.getDate("release_date").toLocalDate())
                 .mpa(mpa)
+                .rating(rs.getInt("rating"))
                 .build();
     }
 }

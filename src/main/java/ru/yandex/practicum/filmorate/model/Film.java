@@ -44,4 +44,6 @@ public class Film {
     @ValidFilmDirectors(message = "У режиссера отсутствует id")
     @Builder.Default
     Set<Director> directors = new HashSet<>();
+    @Builder.Default
+    Integer rating = 0;
 }

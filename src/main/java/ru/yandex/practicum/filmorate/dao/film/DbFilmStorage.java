@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.dao.film;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -47,6 +48,7 @@ public class DbFilmStorage implements FilmStorage {
             }
             params.put("mpa_id", film.getMpa().getId());
         }
+        jdbcInsert.usingColumns(params.keySet().toArray(new String[0]));
         Long id = jdbcInsert.executeAndReturnKey(params).longValue();
         Film updatedFilm = film.toBuilder().id(id).build();
         log.info("Добавление фильма film={}", updatedFilm);
@@ -119,14 +121,25 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public void addLike(Film film, User user) {
         log.debug("Добавление лайка filmId={}, userId={}", film.getId(), user.getId());
-        jdbcTemplate.update("MERGE INTO likes KEY(film_id, user_id) VALUES (?, ?)", film.getId(), user.getId());
+        try {
+            int upd = jdbcTemplate.update("INSERT INTO likes (film_id, user_id) VALUES (?, ?)",
+                    film.getId(), user.getId());
+            if (upd > 0) {
+                jdbcTemplate.update("UPDATE films SET rating = rating + 1 WHERE film_id = ?", film.getId());
+            }
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Ошибка при добавлении лайка filmId={}, userId={}", film.getId(), user.getId());
+        }
     }
 
     @Override
     public void removeLike(Film film, User user) {
         log.debug("Удаление лайка filmId={}, userId={}", film.getId(), user.getId());
-        jdbcTemplate.update("DELETE FROM likes WHERE film_id = ? AND user_id = ?",
+        int upd = jdbcTemplate.update("DELETE FROM likes WHERE film_id = ? AND user_id = ?",
                 film.getId(), user.getId());
+        if (upd > 0) {
+            jdbcTemplate.update("UPDATE films SET rating = rating - 1 WHERE film_id = ?", film.getId());
+        }
     }
 
     @Override
@@ -153,11 +166,8 @@ public class DbFilmStorage implements FilmStorage {
                         "LEFT JOIN public.mpa m ON f.mpa_id = m.mpa_id " +
                         "LEFT JOIN public.film_genre fg ON f.film_id = fg.film_id " +
                         "LEFT JOIN public.genre g ON fg.genre_id = g.genre_id " +
-                        "LEFT JOIN (SELECT l.film_id, COUNT(l.user_id) likes_count " +
-                        "FROM public.likes l " +
-                        "GROUP BY l.film_id) t ON f.film_id = t.film_id " +
                         "%s" +
-                        "ORDER BY t.likes_count DESC " +
+                        "ORDER BY f.rating DESC " +
                         "LIMIT ?", filter);
 
         List<Film> unfinishedFilms = jdbcTemplate.query(sqlSelectQuery, (rs, rowNum) ->
@@ -169,25 +179,25 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public int getLikesCount(Film film) {
         log.debug("Получение количества лайков у фильма id={}", film.getId());
-        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) AS count FROM likes WHERE film_id = ?",
-                (rs, rowNum) -> rs.getInt("count"), film.getId());
-        return Objects.requireNonNullElse(count, 0);
+        try {
+            Integer count = jdbcTemplate.queryForObject("SELECT rating FROM films WHERE film_id = ?",
+                    (rs, rowNum) -> rs.getInt("rating"), film.getId());
+            return Objects.requireNonNullElse(count, 0);
+        } catch (EmptyResultDataAccessException e) {
+            return 0;
+        }
     }
 
     @Override
     public Collection<Film> getCommonFilms(User user, User friend) {
         log.debug("Получение списка общих фильмов пользователей user={} и friend={}", user, friend);
-        String sqlSelectQuery = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description, COUNT(l.user_id) AS likes_count " +
-                "FROM public.likes l " +
-                "LEFT JOIN public.films f ON l.film_id = f.film_id " +
-                "LEFT JOIN public.mpa m ON f.mpa_id = m.mpa_id " +
-                "WHERE l.film_id IN (SELECT l.film_id " +
-                    "FROM public.likes l " +
-                    "WHERE l.user_id = ? OR l.user_id = ? " +
-                    "GROUP BY l.film_id " +
-                    "HAVING COUNT(l.user_id) = 2) " +
-                "GROUP BY l.film_id " +
-                "ORDER BY likes_count DESC";
+        String sqlSelectQuery = "SELECT f.*, m.name mpa_name, m.description mpa_description FROM likes l " +
+                        "LEFT JOIN films f ON l.film_id = f.film_id " +
+                        "LEFT JOIN mpa m ON f.mpa_id = m.mpa_id " +
+                        "WHERE l.user_id IN (?, ?) " +
+                        "GROUP BY l.film_id " +
+                        "HAVING COUNT(l.user_id) = 2 " +
+                        "ORDER BY f.rating DESC";
         List<Film> unfinishedFilms = jdbcTemplate.query(sqlSelectQuery, (rs, rowNum) ->
                 FilmMapper.createFilm(rs), user.getId(), friend.getId());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
@@ -209,14 +219,13 @@ public class DbFilmStorage implements FilmStorage {
                         "ORDER BY f.release_date";
                 break;
             case LIKES:
-                sql = "SELECT  COUNT(l.*) AS likes, f.*, m.name AS mpa_name, m.description AS mpa_description " +
+                sql = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
                         "FROM film_director AS fd " +
                         "LEFT JOIN films AS f ON f.film_id = fd.film_id " +
                         "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
-                        "LEFT JOIN likes AS l ON l.film_id = f.film_id " +
                         "WHERE fd.director_id = ? " +
                         "GROUP BY f.film_id " +
-                        "ORDER BY likes DESC";
+                        "ORDER BY f.rating DESC";
                 break;
             default:
                 throw new ValidationException(String.format("Неизвестный параметр сортировки sortBy=%s", sortBy));
@@ -250,8 +259,7 @@ public class DbFilmStorage implements FilmStorage {
                 "RIGHT JOIN(" +
                 String.join(" UNION ", filters) +
                 ") AS title ON title.film_id = f.film_id " +
-                "LEFT JOIN (SELECT COUNT(*) AS count, film_id FROM likes GROUP BY film_id) AS cl ON cl.film_id= f.film_id " +
-                "ORDER BY cl.count DESC";
+                "ORDER BY f.rating DESC";
         List<Film> unfinishedFilms = jdbcTemplate.query(sb,
                 (rs, rowNum) -> FilmMapper.createFilm(rs),
                 Collections.nCopies(filters.size(), "%" + query + "%").toArray());

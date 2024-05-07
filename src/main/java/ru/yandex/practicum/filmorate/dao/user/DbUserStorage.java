@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
@@ -11,10 +14,7 @@ import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 @Repository
@@ -40,7 +40,7 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public User get(Long id) {
-        log.info("Получение пользователя id={}", id);
+        log.debug("Получение пользователя id={}", id);
         String sql = "SELECT * FROM users WHERE user_id = ?";
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> UserMapper.createUser(rs), id);
@@ -51,14 +51,14 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public Collection<User> getAll() {
-        log.info("Получение всех пользователей");
+        log.debug("Получение всех пользователей");
         String sql = "SELECT * FROM users";
         return jdbcTemplate.query(sql, (rs, rowNum) -> UserMapper.createUser(rs));
     }
 
     @Override
     public User update(User user) {
-        log.info("Обновление пользователя user={}", user);
+        log.debug("Обновление пользователя user={}", user);
         String sql = "UPDATE users SET name = ?, login = ?, email = ?, birthday = ? WHERE user_id = ?";
         jdbcTemplate.update(sql, user.getName(), user.getLogin(), user.getEmail(), user.getBirthday(), user.getId());
         return get(user.getId());
@@ -66,14 +66,23 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public User delete(User user) {
-        log.info("Удаление пользователя id={}", user.getId());
+        log.debug("Удаление пользователя id={}", user.getId());
+        List<Long> filmIds = getLikedFilmIds(user);
+        if (!filmIds.isEmpty()) {
+            log.debug("Снижение рейтинга у фильмов filmIds={} из-за удаления пользователя userId={}", filmIds, user.getId());
+            NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+            SqlParameterSource namedParameters = new MapSqlParameterSource().addValue("filmIds", filmIds);
+            namedParameterJdbcTemplate.update("UPDATE films SET rating = rating - 1 WHERE film_id IN (:filmIds)",
+                    namedParameters);
+            jdbcTemplate.update("DELETE FROM likes WHERE user_id = ?", user.getId());
+        }
         jdbcTemplate.update("DELETE FROM users WHERE user_id = ?", user.getId());
         return user;
     }
 
     @Override
     public void addFriend(User user, User friend) {
-        log.info("Добавление дружбы userId={}, friendId={}", user.getId(), friend.getId());
+        log.debug("Добавление дружбы userId={}, friendId={}", user.getId(), friend.getId());
         String sqlGetFriendship = "SELECT COUNT(*) AS count FROM friendship WHERE user_id = ? AND friend_id = ?";
         Integer userFriendListSize = Objects.requireNonNullElse(jdbcTemplate.queryForObject(sqlGetFriendship,
                 (rs, rowNum) -> rs.getInt("count"),
@@ -95,7 +104,7 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public void removeFriend(User user, User friend) {
-        log.info("Удаление дружбы userId={}, friendId={}", user.getId(), friend.getId());
+        log.debug("Удаление дружбы userId={}, friendId={}", user.getId(), friend.getId());
         int updated = jdbcTemplate.update("DELETE FROM friendship WHERE user_id = ? AND friend_id = ?",
                 user.getId(), friend.getId());
         if (updated > 0) {
@@ -106,9 +115,14 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public Collection<User> getFriends(User user) {
-        log.info("Получение списка друзей пользователя id={}", user.getId());
+        log.debug("Получение списка друзей пользователя id={}", user.getId());
         return jdbcTemplate.query("SELECT u.* FROM friendship AS fr " +
                         "LEFT JOIN users AS u ON fr.friend_id = u.user_id WHERE fr.user_id = ?",
                 (rs, rowNum) -> UserMapper.createUser(rs), user.getId());
+    }
+
+    private List<Long> getLikedFilmIds(User user) {
+        return jdbcTemplate.query("SELECT film_id FROM likes WHERE user_id = ?",
+                (rs, rowNum) -> rs.getLong("film_id"), user.getId());
     }
 }
