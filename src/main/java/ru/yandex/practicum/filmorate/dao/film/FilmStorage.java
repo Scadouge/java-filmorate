@@ -18,7 +18,7 @@ public interface FilmStorage extends CrudStorage<Film> {
 
     int getLikesCount(Film film);
 
-    Collection<Film> getFavouriteFilms(User user);
+    Collection<Film> getCommonFilms(User user, User friend);
 
     Collection<Film> getSortedDirectorFilms(Director director, String sortBy);
 
