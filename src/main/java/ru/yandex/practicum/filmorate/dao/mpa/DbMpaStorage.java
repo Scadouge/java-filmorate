@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.mpa;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Slf4j
 @Repository
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class DbMpaStorage implements MpaStorage {
     private final JdbcTemplate jdbcTemplate;
 

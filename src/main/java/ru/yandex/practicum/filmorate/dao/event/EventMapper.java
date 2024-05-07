@@ -8,6 +8,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class EventMapper {
+    private EventMapper() {
+    }
 
     public static Event createEvent(ResultSet resultSet) throws SQLException {
         return Event.builder()

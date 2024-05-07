@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.film;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,10 +13,7 @@ import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.sql.Date;
 import java.util.*;
@@ -25,7 +22,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Repository
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class DbFilmStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenreStorage genreStorage;
@@ -198,8 +195,9 @@ public class DbFilmStorage implements FilmStorage {
     public Collection<Film> getSortedDirectorFilms(Director director, String sortBy) {
         log.debug("Получение списка фильмов режиссера director={}, sortBy={}", director, sortBy);
         String sql;
-        switch (sortBy) {
-            case "year":
+        FilmSortBy sortByEnum = FilmSortBy.valueOf(sortBy.toUpperCase());
+        switch (sortByEnum) {
+            case YEAR:
                 sql = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
                         "FROM film_director AS fd " +
                         "LEFT JOIN films AS f ON f.film_id = fd.film_id " +
@@ -207,7 +205,7 @@ public class DbFilmStorage implements FilmStorage {
                         "WHERE fd.director_id = ? " +
                         "ORDER BY f.release_date";
                 break;
-            case "likes":
+            case LIKES:
                 sql = "SELECT  COUNT(l.*) AS likes, f.*, m.name AS mpa_name, m.description AS mpa_description " +
                         "FROM film_director AS fd " +
                         "LEFT JOIN films AS f ON f.film_id = fd.film_id " +
@@ -218,7 +216,7 @@ public class DbFilmStorage implements FilmStorage {
                         "ORDER BY likes DESC";
                 break;
             default:
-                throw new ValidationException("Неизвестный параметр сортировки sortBy=" + sortBy);
+                throw new ValidationException(String.format("Неизвестный параметр сортировки sortBy=%s", sortBy));
         }
         List<Film> unfinishedFilms = jdbcTemplate.query(sql, (rs, rowNum) -> FilmMapper.createFilm(rs), director.getId());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
@@ -294,7 +292,7 @@ public class DbFilmStorage implements FilmStorage {
         Optional<Long> missingGenreId = film.getGenres().stream()
                 .map(Genre::getId).filter(id -> !existedGenreIds.contains(id)).findFirst();
         if (missingGenreId.isPresent()) {
-            throw new ValidationException("Несуществующий жанр id=" + missingGenreId.get());
+            throw new ValidationException(String.format("Несуществующий жанр id=%s", missingGenreId.get()));
         }
         jdbcTemplate.update("DELETE FROM film_genre WHERE film_id = ?",
                 film.getId());
@@ -316,7 +314,7 @@ public class DbFilmStorage implements FilmStorage {
         Optional<Long> missingDirectorId = film.getDirectors().stream()
                 .map(Director::getId).filter(id -> !existedDirectorIds.contains(id)).findFirst();
         if (missingDirectorId.isPresent()) {
-            throw new ValidationException("Несуществующий режиссер id=" + missingDirectorId.get());
+            throw new ValidationException(String.format("Несуществующий режиссер id=%s", missingDirectorId.get()));
         }
         jdbcTemplate.update("DELETE FROM film_director WHERE film_id = ?",
                 film.getId());

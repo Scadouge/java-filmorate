@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.director;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class DbDirectorStorage implements DirectorStorage {
     private final JdbcTemplate jdbcTemplate;
 
@@ -41,7 +41,7 @@ public class DbDirectorStorage implements DirectorStorage {
             return jdbcTemplate.queryForObject("SELECT * FROM director WHERE director_id = ?",
                     (rs, rowNum) -> DirectorMapper.createDirector(rs), id);
         } catch (EmptyResultDataAccessException e) {
-            throw new ItemNotFoundException(id, "Режиссер не найден id=" + id);
+            throw new ItemNotFoundException(id, String.format("Режиссер не найден id=%s", id));
         }
     }
 

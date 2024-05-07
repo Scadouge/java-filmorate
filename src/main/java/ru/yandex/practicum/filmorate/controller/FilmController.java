@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
 import java.util.Collection;
 
 @Slf4j
@@ -28,6 +30,9 @@ public class FilmController {
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
         log.info("Обновление фильма {}", film);
+        if (film.getId() == null) {
+            throw new ValidationException("Не указан id фильма");
+        }
         return filmService.updateFilm(film);
     }
 
@@ -56,7 +61,8 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopularByYearAndGenre(@RequestParam(defaultValue = "10") Integer count,
+    public Collection<Film> getPopularByYearAndGenre(@Positive
+                                                     @RequestParam(defaultValue = "10") Integer count,
                                                      @RequestParam(required = false) Long genreId,
                                                      @RequestParam(required = false) String year) {
         log.debug("Получение списка популярных фильмов count={} с фильтрацией по genreId={} и year={}",
