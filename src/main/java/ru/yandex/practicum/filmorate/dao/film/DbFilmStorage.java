@@ -195,7 +195,12 @@ public class DbFilmStorage implements FilmStorage {
     public Collection<Film> getSortedDirectorFilms(Director director, String sortBy) {
         log.debug("Получение списка фильмов режиссера director={}, sortBy={}", director, sortBy);
         String sql;
-        FilmSortBy sortByEnum = FilmSortBy.valueOf(sortBy.toUpperCase());
+        FilmSortBy sortByEnum;
+        try {
+            sortByEnum = FilmSortBy.valueOf(sortBy.toUpperCase());
+        } catch (Throwable e) {
+            throw new ValidationException(String.format("Неизвестный параметр сортировки sortBy=%s", sortBy));
+        }
         switch (sortByEnum) {
             case YEAR:
                 sql = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
@@ -217,6 +222,7 @@ public class DbFilmStorage implements FilmStorage {
                 break;
             default:
                 throw new ValidationException(String.format("Неизвестный параметр сортировки sortBy=%s", sortBy));
+
         }
         List<Film> unfinishedFilms = jdbcTemplate.query(sql, (rs, rowNum) -> FilmMapper.createFilm(rs), director.getId());
         Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
