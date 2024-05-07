@@ -42,7 +42,7 @@ public class DbGenreStorage implements GenreStorage {
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> GenreMapper.createGenre(rs), id);
         } catch (EmptyResultDataAccessException e) {
-            throw new ItemNotFoundException(id, "Жанр не найден id=" + id);
+            throw new ItemNotFoundException(id, (String.format("Жанр не найден id= %s", id)));
         }
     }
 

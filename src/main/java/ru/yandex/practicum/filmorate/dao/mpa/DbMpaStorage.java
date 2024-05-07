@@ -40,7 +40,7 @@ public class DbMpaStorage implements MpaStorage {
             return jdbcTemplate.queryForObject("SELECT * FROM mpa WHERE mpa_id = ?",
                     (rs, rowNum) -> MpaMapper.createRating(rs), id);
         } catch (EmptyResultDataAccessException e) {
-            throw new ItemNotFoundException(id, "Рейтинг mpa не найден id=" + id);
+            throw new ItemNotFoundException(id, (String.format("Рейтинг mpa не найден id= %s", id)));
         }
     }
 

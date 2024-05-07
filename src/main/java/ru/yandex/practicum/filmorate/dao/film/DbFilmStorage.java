@@ -248,7 +248,7 @@ public class DbFilmStorage implements FilmStorage {
             filters.add("SELECT t.film_id FROM films AS t WHERE t.name ILIKE ?");
         }
         if (searchBy.size() > 0 || split.length == 0) {
-            throw new ValidationException("Неизвестные тэги поиска " + searchBy);
+            throw new ValidationException(String.format("Неизвестные тэги поиска: %s", searchBy));
         }
         String sb = "SELECT f.*, m.name AS mpa_name, m.description AS mpa_description " +
                 "FROM films AS f " +
