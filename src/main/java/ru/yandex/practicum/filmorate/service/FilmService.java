@@ -66,11 +66,8 @@ public class FilmService {
     }
 
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
-        log.info("Получения списка общих фильмов пользователей с userId={} и friendId={}", userId, friendId);
-        Collection<Film> userFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(userId));
-        Collection<Film> friendFavouriteFilms = filmStorage.getFavouriteFilms(userStorage.get(friendId));
-        userFavouriteFilms.retainAll(friendFavouriteFilms);
-        return userFavouriteFilms;
+        log.info("Получение списка общих фильмов пользователей с userId={} и friendId={}", userId, friendId);
+        return filmStorage.getCommonFilms(userStorage.get(userId), userStorage.get(friendId));
     }
 
     public Film deleteFilm(Long filmId) {
