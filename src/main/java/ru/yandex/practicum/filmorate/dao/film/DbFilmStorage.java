@@ -157,7 +157,7 @@ public class DbFilmStorage implements FilmStorage {
 
         String sqlSelectQuery = String.format(
                 "SELECT f.*, m.name mpa_name, m.description mpa_description FROM films f " +
-                    "LEFT JOIN mpa m ON f.mpa_id = m.mpa_id " +
+                        "LEFT JOIN mpa m ON f.mpa_id = m.mpa_id " +
                         "LEFT JOIN (SELECT AVG(rating) AS avg, film_id FROM marks GROUP BY film_id) " +
                         "AS mk ON mk.film_id= f.film_id " +
                         "%s" +
@@ -206,7 +206,7 @@ public class DbFilmStorage implements FilmStorage {
                         "LEFT JOIN films AS f ON f.film_id = fd.film_id " +
                         "LEFT JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
                         "LEFT JOIN (SELECT AVG(rating) AS avg, film_id FROM marks GROUP BY film_id) " +
-                            "AS mk ON mk.film_id= f.film_id " +
+                        "AS mk ON mk.film_id= f.film_id " +
                         "WHERE fd.director_id = ? " +
                         "GROUP BY f.film_id " +
                         "ORDER BY mk.avg DESC";
@@ -254,30 +254,31 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Map<Long, List<Film>> getLikedFilms() {
+    public Map<Long, HashMap<Film, Integer>> getLikedFilms() {
         log.debug("Получение списка понравившихся фильмов для каждого пользователя");
+        Map<Long, HashMap<Film, Integer>> usersFilmsWithRatings = new HashMap<>();
         Map<Long, List<Film>> usersFilms = new HashMap<>();
-        String sql = "SELECT l.user_id, f.*, mpa.name AS mpa_name, mpa.description AS mpa_description " +
-                "FROM likes AS l " +
-                "LEFT JOIN films AS f ON l.film_id = f.film_id " +
+        String sql = "SELECT ms.user_id, ms.rating, f.*, mpa.name AS mpa_name, mpa.description AS mpa_description " +
+                "FROM marks AS ms " +
+                "LEFT JOIN films AS f ON ms.film_id = f.film_id " +
                 "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id ";
         jdbcTemplate.query(sql, (rs, rowNum) -> {
-            if (!usersFilms.containsKey(rs.getLong("user_id"))) {
-                usersFilms.put(rs.getLong("user_id"), new ArrayList<>());
+            if (!usersFilmsWithRatings.containsKey(rs.getLong("user_id"))) {
+                usersFilmsWithRatings.put(rs.getLong("user_id"), new HashMap<>());
             }
-            usersFilms.get(rs.getLong("user_id"))
-                    .add(FilmMapper.createFilm(rs).toBuilder().build());
+            usersFilmsWithRatings.get(rs.getLong("user_id"))
+                    .put(FilmMapper.createFilm(rs).toBuilder().build(), rs.getInt("rating"));
             return null;
         });
 
-        Set<Long> filmsId = usersFilms.values().stream()
-                .flatMap(films -> films.stream().map(Film::getId))
-                .collect(Collectors.toSet());
-        Map<Long, Set<Genre>> filmsGenres = getFilmGenreMapping(filmsId);
-        Map<Long, Set<Director>> filmsDirectors = getFilmDirectorMapping(filmsId);
+        usersFilmsWithRatings.values().stream()
+                .forEach(map -> {
+                    map.keySet().stream().forEach(f -> FilmMapper.mapFilms(List.of(f),
+                                    getFilmGenreMapping(Set.of(f.getId())), getFilmDirectorMapping(Set.of(f.getId())))
+                            .stream().findFirst().orElseThrow(() -> new RuntimeException("Ошибка при маппинге фильма")));
+                });
 
-        usersFilms.replaceAll((k, v) -> new ArrayList<>(FilmMapper.mapFilms(usersFilms.get(k), filmsGenres, filmsDirectors)));
-        return usersFilms;
+        return usersFilmsWithRatings;
     }
 
     private void setGenres(Film film) {
