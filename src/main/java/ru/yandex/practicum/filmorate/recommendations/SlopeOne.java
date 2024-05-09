@@ -52,14 +52,15 @@ public class SlopeOne {
                     freq.get(e.getKey()).put(e2.getKey(), oldCount + 1);
                     diff.get(e.getKey()).put(e2.getKey(), oldDiff + observedDiff);
 
-                    for (Film j : diff.keySet()) {
-                        for (Film i : diff.get(j).keySet()) {
-                            double oldValue = diff.get(j).get(i).doubleValue();
-                            int count = freq.get(j).get(i).intValue();
-                            diff.get(j).put(i, oldValue / count);
-                        }
-                    }
                 }
+            }
+        }
+
+        for (Film j : diff.keySet()) {
+            for (Film i : diff.get(j).keySet()) {
+                double oldValue = diff.get(j).get(i).doubleValue();
+                int count = freq.get(j).get(i).intValue();
+                diff.get(j).put(i, oldValue / count);
             }
         }
     }
