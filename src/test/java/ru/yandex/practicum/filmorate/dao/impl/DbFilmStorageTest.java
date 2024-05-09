@@ -1,26 +1,18 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
-import ru.yandex.practicum.filmorate.dao.event.DbEventStorage;
-import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
-import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
 import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
-import ru.yandex.practicum.filmorate.dao.mpa.DbMpaStorage;
 import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
-import ru.yandex.practicum.filmorate.dao.user.DbUserStorage;
-import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
-import ru.yandex.practicum.filmorate.service.EventService;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import utils.*;
@@ -32,28 +24,17 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@JdbcTest
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class DbFilmStorageTest {
-    private final JdbcTemplate jdbcTemplate;
-    private MpaStorage mpaStorage;
-    private GenreStorage genreStorage;
-    private DirectorStorage directorStorage;
-    private FilmService filmService;
-    private FilmStorage filmStorage;
-    private UserService userService;
-
-    @BeforeEach
-    void setUp() {
-        genreStorage = new DbGenreStorage(jdbcTemplate);
-        mpaStorage = new DbMpaStorage(jdbcTemplate);
-        directorStorage = new DbDirectorStorage(jdbcTemplate);
-        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage, directorStorage);
-        UserStorage userStorage = new DbUserStorage(jdbcTemplate);
-        EventService eventService = new EventService(new DbEventStorage(jdbcTemplate), userStorage);
-        filmService = new FilmService(filmStorage, userStorage, directorStorage, eventService);
-        userService = new UserService(userStorage, filmService, eventService);
-    }
+    private final MpaStorage mpaStorage;
+    private final GenreStorage genreStorage;
+    private final DirectorStorage directorStorage;
+    private final FilmStorage filmStorage;
+    private final FilmService filmService;
+    private final UserService userService;
 
     private Film getNewFilledFilm() {
         return getNewFilledFilm(null);
@@ -269,6 +250,8 @@ class DbFilmStorageTest {
                 .stream().skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
 
         final Collection<Film> sortedByYearLikes = filmService.getSortedDirectorFilms(director.getId(), "likes");
+
+        int likesCount = filmStorage.getLikesCount(secondFilm);
 
         assertEquals(3, sortedByYearLikes.size());
         assertEquals(secondFilm, sortedByYearLikes

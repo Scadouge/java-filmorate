@@ -12,6 +12,8 @@ import java.util.Map;
 public interface FilmStorage extends CrudStorage<Film> {
     void addLike(Film film, User user);
 
+    void deleteAllUserLikesFromFilms(User user);
+
     void removeLike(Film film, User user);
 
     Collection<Film> getPopularByYearAndGenre(Integer count, Long genreId, String year);

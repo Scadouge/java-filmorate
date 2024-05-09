@@ -1,12 +1,11 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -21,16 +20,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@JdbcTest
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class DbDirectorStorageTest {
-    private final JdbcTemplate jdbcTemplate;
-    private DirectorStorage directorStorage;
-
-    @BeforeEach
-    void setUp() {
-        directorStorage = new DbDirectorStorage(jdbcTemplate);
-    }
+    private final DirectorStorage directorStorage;
 
     @Test
     void testPutDirector() {

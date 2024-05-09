@@ -1,12 +1,11 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.mpa.DbMpaStorage;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -17,16 +16,12 @@ import java.util.Collection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@JdbcTest
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class DbMpaStorageTest {
-    private final JdbcTemplate jdbcTemplate;
-    private MpaStorage mpaStorage;
-
-    @BeforeEach
-    void setUp() {
-        mpaStorage = new DbMpaStorage(jdbcTemplate);
-    }
+    private final MpaStorage mpaStorage;
 
     @Test
     void testPutMpa() {

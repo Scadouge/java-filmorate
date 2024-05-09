@@ -4,19 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
-import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
-import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
-import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
-import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
-import ru.yandex.practicum.filmorate.dao.mpa.DbMpaStorage;
-import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
-import ru.yandex.practicum.filmorate.dao.review.DbReviewStorage;
 import ru.yandex.practicum.filmorate.dao.review.ReviewStorage;
-import ru.yandex.practicum.filmorate.dao.user.DbUserStorage;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -34,51 +26,36 @@ import static org.junit.jupiter.api.Assertions.*;
 import static ru.yandex.practicum.filmorate.dao.review.DbReviewStorage.DISLIKE_VALUE;
 import static ru.yandex.practicum.filmorate.dao.review.DbReviewStorage.LIKE_VALUE;
 
-@JdbcTest
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class DbReviewStorageTest {
-
-    private final JdbcTemplate jdbcTemplate;
-    private FilmStorage filmStorage;
-    private UserStorage userStorage;
-    private GenreStorage genreStorage;
-    private MpaStorage mpaStorage;
-
-    private DirectorStorage directorStorage;
-    private ReviewStorage reviewStorage;
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
+    private final ReviewStorage reviewStorage;
 
     Film film;
     User user;
-
     Review firstReview;
     Review secondReview;
 
     @BeforeEach
     void setUp() {
-        reviewStorage = new DbReviewStorage(jdbcTemplate);
-        genreStorage = new DbGenreStorage(jdbcTemplate);
-        mpaStorage = new DbMpaStorage(jdbcTemplate);
-        userStorage = new DbUserStorage(jdbcTemplate);
-        directorStorage = new DbDirectorStorage(jdbcTemplate);
-        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage, directorStorage);
-
         film = filmStorage.put(TestFilmUtils.getNewFilm());
         user = userStorage.put(TestUserUtils.getNewUser());
-
         firstReview = reviewStorage.put(TestReviewUtils
                 .getNewReview()
                 .toBuilder()
                 .userId(user.getId())
                 .filmId(film.getId())
                 .build());
-
         secondReview = reviewStorage.put(TestReviewUtils
                 .getNewReview()
                 .toBuilder()
                 .userId(user.getId())
                 .filmId(film.getId())
                 .build());
-
     }
 
     @Test
@@ -125,7 +102,7 @@ class DbReviewStorageTest {
 
     @Test
     void testAddLikeToReview() {
-        Long usefulBeforeLike = firstReview.getUseful();
+        Integer usefulBeforeLike = firstReview.getUseful();
         reviewStorage.addLikeToReview(firstReview, user);
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike + LIKE_VALUE, updatedReview.getUseful());
@@ -133,20 +110,28 @@ class DbReviewStorageTest {
 
     @Test
     void testAddDislikeToReview() {
-        Long usefulBeforeLike = firstReview.getUseful();
+        Integer usefulBeforeLike = firstReview.getUseful();
         reviewStorage.addDislikeToReview(firstReview, user);
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
+        reviewStorage.deleteAllUserScoresFromReviews(firstReview, user);
+        reviewStorage.addLikeToReview(firstReview, user);
+        assertEquals(usefulBeforeLike + LIKE_VALUE, reviewStorage.get(firstReview.getReviewId()).getUseful());
+        User newUser = userStorage.put(TestUserUtils.getNewUser());
+        reviewStorage.addLikeToReview(firstReview, newUser);
+        assertEquals(usefulBeforeLike + (LIKE_VALUE * 2), reviewStorage.get(firstReview.getReviewId()).getUseful());
+        userStorage.delete(newUser);
+        assertEquals(usefulBeforeLike + LIKE_VALUE, reviewStorage.get(firstReview.getReviewId()).getUseful());
     }
 
     @Test
     void testDeleteLikeOrDislikeToReview() {
-        Long usefulBeforeLike = firstReview.getUseful();
+        Integer usefulBeforeLike = firstReview.getUseful();
         reviewStorage.addDislikeToReview(firstReview, user);
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
 
-        reviewStorage.deleteLikeOrDislikeFromReview(firstReview, user);
+        reviewStorage.deleteAllUserScoresFromReviews(firstReview, user);
         updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike, updatedReview.getUseful());
     }

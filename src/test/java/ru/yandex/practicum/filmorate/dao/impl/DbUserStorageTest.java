@@ -1,13 +1,14 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.user.DbUserStorage;
+import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.dao.SqlHelper;
 import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.FriendshipStatus;
@@ -15,21 +16,22 @@ import ru.yandex.practicum.filmorate.model.User;
 import utils.TestUserUtils;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.FRIENDSHIP_STATUS;
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.FRIENDSHIP_USER_ID;
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Table.FRIENDSHIP;
 
-@JdbcTest
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class DbUserStorageTest {
     private final JdbcTemplate jdbcTemplate;
-    private UserStorage userStorage;
-
-    @BeforeEach
-    void setUp() {
-        userStorage = new DbUserStorage(jdbcTemplate);
-    }
+    private final UserStorage userStorage;
 
     @Test
     public void testFriends() {
@@ -44,9 +46,11 @@ class DbUserStorageTest {
         userStorage.addFriend(firstUser, secondUser);
         userStorage.addFriend(firstUser, secondUser);
         final Collection<User> friendListWithOneFriend = userStorage.getFriends(firstUser);
-        final FriendshipStatus firstToSecondFriendshipStatus = FriendshipStatus.valueOf(Objects.requireNonNull(
-                jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
-                        (rs, RowNum) -> (rs.getString("status")), firstUser.getId())));
+        final FriendshipStatus firstToSecondFriendshipStatus =
+                FriendshipStatus.valueOf(Objects.requireNonNull(jdbcTemplate.queryForObject(new SqlHelper()
+                                .select(FRIENDSHIP_STATUS).from(FRIENDSHIP)
+                                .where(FRIENDSHIP_USER_ID, List.of(firstUser.getId())).toString(),
+                        (rs, RowNum) -> (rs.getString(FRIENDSHIP_STATUS.name())))));
 
         assertEquals(1, friendListWithOneFriend.size());
         assertTrue(friendListWithOneFriend.contains(secondUser));
@@ -54,26 +58,33 @@ class DbUserStorageTest {
         assertEquals(FriendshipStatus.UNACCEPTED, firstToSecondFriendshipStatus);
 
         userStorage.addFriend(secondUser, firstUser);
-        final FriendshipStatus firstToSecondFriendshipStatusAgain = FriendshipStatus.valueOf(Objects.requireNonNull(
-                jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
-                        (rs, RowNum) -> (rs.getString("status")), firstUser.getId())));
-        final FriendshipStatus secondToFirstFriendshipStatus = FriendshipStatus.valueOf(Objects.requireNonNull(
-                jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
-                        (rs, RowNum) -> (rs.getString("status")), secondUser.getId())));
+        final FriendshipStatus firstToSecondFriendshipStatusAgain =
+                FriendshipStatus.valueOf(Objects.requireNonNull(jdbcTemplate.queryForObject(new SqlHelper()
+                                .select(FRIENDSHIP_STATUS).from(FRIENDSHIP)
+                                .where(FRIENDSHIP_USER_ID, List.of(firstUser.getId())).toString(),
+                        (rs, RowNum) -> (rs.getString(FRIENDSHIP_STATUS.name())))));
+        final FriendshipStatus secondToFirstFriendshipStatus =
+                FriendshipStatus.valueOf(Objects.requireNonNull(jdbcTemplate.queryForObject(new SqlHelper()
+                                .select(FRIENDSHIP_STATUS).from(FRIENDSHIP)
+                                .where(FRIENDSHIP_USER_ID, List.of(secondUser.getId())).toString(),
+                        (rs, RowNum) -> (rs.getString(FRIENDSHIP_STATUS.name())))));
 
         assertEquals(FriendshipStatus.ACCEPTED, firstToSecondFriendshipStatusAgain);
         assertEquals(FriendshipStatus.ACCEPTED, secondToFirstFriendshipStatus);
 
         userStorage.removeFriend(firstUser, secondUser);
         final Collection<User> friendListWithoutFriends = userStorage.getFriends(firstUser);
-        final FriendshipStatus secondToFirstFriendshipStatusAgain = FriendshipStatus.valueOf(Objects.requireNonNull(
-                jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
-                        (rs, RowNum) -> (rs.getString("status")), secondUser.getId())));
+        final FriendshipStatus secondToFirstFriendshipStatusAgain =
+                FriendshipStatus.valueOf(Objects.requireNonNull(jdbcTemplate.queryForObject(new SqlHelper()
+                                .select(FRIENDSHIP_STATUS).from(FRIENDSHIP)
+                                .where(FRIENDSHIP_USER_ID, List.of(secondUser.getId())).toString(),
+                        (rs, RowNum) -> (rs.getString(FRIENDSHIP_STATUS.name())))));
 
         assertThrows(EmptyResultDataAccessException.class,
-                () -> FriendshipStatus.valueOf(Objects.requireNonNull(
-                        jdbcTemplate.queryForObject("SELECT status FROM friendship WHERE user_id = ?",
-                        (rs, RowNum) -> (rs.getString("status")), firstUser.getId()))));
+                () -> FriendshipStatus.valueOf(Objects.requireNonNull(jdbcTemplate.queryForObject(new SqlHelper()
+                                .select(FRIENDSHIP_STATUS).from(FRIENDSHIP)
+                                .where(FRIENDSHIP_USER_ID, List.of(firstUser.getId())).toString(),
+                        (rs, RowNum) -> (rs.getString(FRIENDSHIP_STATUS.name()))))));
         assertEquals(0, friendListWithoutFriends.size());
         assertEquals(FriendshipStatus.UNACCEPTED, secondToFirstFriendshipStatusAgain);
 

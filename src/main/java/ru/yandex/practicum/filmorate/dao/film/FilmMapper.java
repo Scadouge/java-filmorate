@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.*;
+
 public class FilmMapper {
     private FilmMapper() {
     }
@@ -37,23 +39,23 @@ public class FilmMapper {
     }
 
     public static Film createFilm(ResultSet rs) throws SQLException {
-        long mpaId = rs.getLong("mpa_id");
+        long mpaId = rs.getLong(FILM_MPA_ID.name());
         Mpa mpa = null;
         if (mpaId != 0) {
             mpa = Mpa.builder()
                     .id(mpaId)
-                    .name(rs.getString("mpa_name"))
-                    .description(rs.getString("mpa_description")).build();
+                    .name(rs.getString(MPA_NAME.name()))
+                    .description(rs.getString(MPA_DESCRIPTION.name())).build();
         }
-        Long filmId = rs.getLong("film_id");
+        Long filmId = rs.getLong(FILM_ID.name());
         return Film.builder()
                 .id(filmId)
-                .name(rs.getString("name"))
-                .description(rs.getString("description"))
-                .duration(rs.getInt("duration"))
-                .releaseDate(rs.getDate("release_date").toLocalDate())
+                .name(rs.getString(FILM_NAME.name()))
+                .description(rs.getString(FILM_DESCRIPTION.name()))
+                .duration(rs.getInt(FILM_DURATION.name()))
+                .releaseDate(rs.getDate(FILM_RELEASE_DATE.name()).toLocalDate())
                 .mpa(mpa)
-                .rating(rs.getInt("rating"))
+                .rating(rs.getInt(FILM_RATING.name()))
                 .build();
     }
 }

@@ -1,27 +1,16 @@
 package ru.yandex.practicum.filmorate.recommendations;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
-import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
-import ru.yandex.practicum.filmorate.dao.event.DbEventStorage;
-import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
-import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
-import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
-import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
-import ru.yandex.practicum.filmorate.dao.mpa.DbMpaStorage;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
-import ru.yandex.practicum.filmorate.dao.user.DbUserStorage;
-import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.EventService;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import utils.TestFilmUtils;
@@ -32,26 +21,14 @@ import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@JdbcTest
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class SlopeOneTest {
-    private final JdbcTemplate jdbcTemplate;
-    private MpaStorage mpaStorage;
-    private UserService userService;
-    private FilmService filmService;
-
-    @BeforeEach
-    void setUp() {
-        mpaStorage = new DbMpaStorage(jdbcTemplate);
-        DirectorStorage directorStorage = new DbDirectorStorage(jdbcTemplate);
-        GenreStorage genreStorage = new DbGenreStorage(jdbcTemplate);
-        FilmStorage filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage, directorStorage);
-        UserStorage userStorage = new DbUserStorage(jdbcTemplate);
-        EventService eventService = new EventService(new DbEventStorage(jdbcTemplate), userStorage);
-
-        filmService = new FilmService(filmStorage, userStorage, directorStorage, eventService);
-        userService = new UserService(userStorage, filmService, eventService);
-    }
+    private final MpaStorage mpaStorage;
+    private final UserService userService;
+    private final FilmService filmService;
 
     private Film getNewFilm() {
         Collection<Mpa> mpaCollection = mpaStorage.getAll();
