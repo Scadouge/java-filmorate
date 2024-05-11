@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.recommendations.SlopeOne;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -81,7 +82,7 @@ public class UserService {
 
     public Collection<Film> getRecommendedFilms(Long id) {
         log.info("Получение рекомендаций фильмов для пользователя id={}", id);
-        Map<Long, List<Film>> usersLikedFilms = filmService.getLikedFilms();
+        Map<Long, HashMap<Film, Integer>> usersLikedFilms = filmService.getLikedFilms();
         return new SlopeOne(usersLikedFilms, id).slopeOne();
     }
 
