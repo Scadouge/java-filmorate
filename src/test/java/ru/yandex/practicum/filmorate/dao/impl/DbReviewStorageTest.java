@@ -78,7 +78,6 @@ class DbReviewStorageTest {
 
     @Test
     void testUpdateReview() {
-
         Review toUpdateReview = secondReview.toBuilder().reviewId(firstReview.getReviewId()).useful(firstReview.getUseful()).build();
 
         reviewStorage.update(toUpdateReview);
@@ -104,6 +103,10 @@ class DbReviewStorageTest {
     void testAddLikeToReview() {
         Integer usefulBeforeLike = firstReview.getUseful();
         reviewStorage.addLikeToReview(firstReview, user);
+        assertDoesNotThrow(() ->  reviewStorage.addLikeToReview(firstReview, user));
+        assertDoesNotThrow(() ->  reviewStorage.addLikeToReview(firstReview, user));
+        assertDoesNotThrow(() ->  reviewStorage.addLikeToReview(firstReview, user));
+        assertDoesNotThrow(() ->  reviewStorage.addLikeToReview(firstReview, user));
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike + LIKE_VALUE, updatedReview.getUseful());
     }
@@ -112,8 +115,12 @@ class DbReviewStorageTest {
     void testAddDislikeToReview() {
         Integer usefulBeforeLike = firstReview.getUseful();
         reviewStorage.addDislikeToReview(firstReview, user);
+        assertDoesNotThrow(() ->  reviewStorage.addDislikeToReview(firstReview, user));
+        assertDoesNotThrow(() ->  reviewStorage.addDislikeToReview(firstReview, user));
+        assertDoesNotThrow(() ->  reviewStorage.addDislikeToReview(firstReview, user));
         Review updatedReview = reviewStorage.get(firstReview.getReviewId());
         assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
+
         reviewStorage.deleteAllUserScoresFromReviews(firstReview, user);
         reviewStorage.addLikeToReview(firstReview, user);
         assertEquals(usefulBeforeLike + LIKE_VALUE, reviewStorage.get(firstReview.getReviewId()).getUseful());
