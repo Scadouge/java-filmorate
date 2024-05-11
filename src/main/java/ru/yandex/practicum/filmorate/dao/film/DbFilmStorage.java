@@ -257,7 +257,6 @@ public class DbFilmStorage implements FilmStorage {
     public Map<Long, HashMap<Film, Integer>> getLikedFilms() {
         log.debug("Получение списка понравившихся фильмов для каждого пользователя");
         Map<Long, HashMap<Film, Integer>> usersFilmsWithRatings = new HashMap<>();
-        Map<Long, List<Film>> usersFilms = new HashMap<>();
         String sql = "SELECT ms.user_id, ms.rating, f.*, mpa.name AS mpa_name, mpa.description AS mpa_description " +
                 "FROM marks AS ms " +
                 "LEFT JOIN films AS f ON ms.film_id = f.film_id " +
@@ -267,7 +266,7 @@ public class DbFilmStorage implements FilmStorage {
                 usersFilmsWithRatings.put(rs.getLong("user_id"), new HashMap<>());
             }
             usersFilmsWithRatings.get(rs.getLong("user_id"))
-                    .put(FilmMapper.createFilm(rs).toBuilder().build(), rs.getInt("rating"));
+                    .put(FilmMapper.createFilm(rs), rs.getInt("rating"));
             return null;
         });
 

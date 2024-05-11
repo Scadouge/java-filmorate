@@ -69,7 +69,6 @@ public class SlopeOne {
         HashMap<Film, Integer> recommendations = new HashMap<>();
         HashMap<Film, Double> uPred = new HashMap<>();
         HashMap<Film, Integer> uFreq = new HashMap<>();
-        Map<Long, HashMap<Film, Integer>> outputData = new HashMap<>();
 
         for (Film j : diff.keySet()) {
             uFreq.put(j, 0);
@@ -105,24 +104,18 @@ public class SlopeOne {
             }
 
             recommendations.putAll(clean);
-            // TODO: удалить после дебага
-//            recommendations.forEach((film, rating) -> System.out.println(film.getId() + ": " + rating));
         }
 
-        /**
+        /*
          На основе полученных предполагаемых рейтингов выводим сет фильмов без уже оценённых пользователем.
          Сет сортирован по рейтингу и содержит только те фильмы, у которых рейтинг положительный.
          */
 
-        Set<Film> recFilms = recommendations.entrySet().stream()
+        return recommendations.entrySet().stream()
                 .filter(e -> !usersFilms.get(userId).keySet().contains(e.getKey()) && e.getValue() >= POSITIVE_LOW)
                 .sorted(Map.Entry.<Film, Integer>comparingByValue().reversed())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // TODO : удалить после дебага
-        // recFilms.forEach(film -> System.out.println(film.getId()));
-
-        return recFilms;
     }
 }
