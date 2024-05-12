@@ -29,6 +29,21 @@ public class SqlHelper {
         return this;
     }
 
+    public SqlHelper select(List<Table> tables, Field... fields) {
+        sb.append("SELECT ");
+        String selectTables = String.join(",", tables.stream()
+                .map(t -> String.format("%s.*", t.getAlias())).collect(Collectors.toSet()));
+        String selectFields = String.join(",", Arrays.stream(fields)
+                .map(Field::getAliasField).collect(Collectors.toSet()));
+        sb.append(selectTables);
+        if (!selectTables.isBlank() && !selectFields.isBlank()) {
+            sb.append(",");
+        }
+        sb.append(selectFields);
+        sb.append(" ");
+        return this;
+    }
+
     public SqlHelper select(Field... fields) {
         sb.append("SELECT ");
         sb.append(String.join(",", Arrays.stream(fields)
@@ -50,9 +65,11 @@ public class SqlHelper {
         return this;
     }
 
-    public SqlHelper withValue(Object arg) {
-        int index = sb.lastIndexOf("?");
-        sb.replace(index, index + 1, arg.toString());
+    public SqlHelper withValue(Object... arg) {
+        for (int i = arg.length - 1; i >= 0; i--) {
+            int index = sb.lastIndexOf("?");
+            sb.replace(index, index + 1, arg[i].toString());
+        }
         return this;
     }
 
@@ -207,6 +224,7 @@ public class SqlHelper {
         FILM_RELEASE_DATE(Table.FILMS),
         FILM_MPA_ID(Table.FILMS),
         FILM_RATING(Table.FILMS),
+        FILM_RATING_COUNT(Table.FILMS),
 
         FRIENDSHIP_USER_ID(Table.FRIENDSHIP),
         FRIENDSHIP_FRIEND_ID(Table.FRIENDSHIP),
@@ -215,8 +233,9 @@ public class SqlHelper {
         GENRE_ID(Table.GENRE),
         GENRE_NAME(Table.GENRE),
 
-        LIKE_FILM_ID(Table.LIKES),
-        LIKE_USER_ID(Table.LIKES),
+        MARK_FILM_ID(Table.MARKS),
+        MARK_USER_ID(Table.MARKS),
+        MARK_RATING(Table.MARKS),
 
         MPA_ID(Table.MPA),
         MPA_NAME(Table.MPA),
@@ -255,7 +274,7 @@ public class SqlHelper {
         FILMS,
         FRIENDSHIP,
         GENRE,
-        LIKES,
+        MARKS,
         MPA,
         REVIEW_RATED,
         REVIEWS,

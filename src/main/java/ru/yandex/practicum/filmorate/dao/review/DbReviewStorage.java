@@ -14,7 +14,6 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.*;
 import static ru.yandex.practicum.filmorate.dao.SqlHelper.Table.REVIEWS;
@@ -90,18 +89,18 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     @Override
-    public void addLikeToReview(Review review, User user) {
-        addScoreToReview(review, user, LIKE_VALUE);
+    public boolean addLikeToReview(Review review, User user) {
         log.debug("Отзыву с id={} добавлен лайк от пользователя с id={}", review.getReviewId(), user.getId());
+        return addScoreToReview(review, user, LIKE_VALUE);
     }
 
     @Override
-    public void addDislikeToReview(Review review, User user) {
-        addScoreToReview(review, user, DISLIKE_VALUE);
+    public boolean addDislikeToReview(Review review, User user) {
         log.debug("Отзыву с id={} добавлен дизлайк от пользователя с id={}", review.getReviewId(), user.getId());
+        return addScoreToReview(review, user, DISLIKE_VALUE);
     }
 
-    private void addScoreToReview(Review review, User user, Integer score) {
+    private boolean addScoreToReview(Review review, User user, Integer score) {
         try {
             SqlHelper helperInsert = new SqlHelper();
             LinkedHashMap<SqlHelper.Field, Object> params = new LinkedHashMap<>();
@@ -115,9 +114,11 @@ public class DbReviewStorage implements ReviewStorage {
             helperUpdate.update(REVIEW_RATING).withValue(String.format("%s + %s", REVIEW_RATING, score))
                     .where(REVIEW_ID, review.getReviewId());
             jdbcTemplate.update(helperUpdate.toString());
+            return true;
         } catch (DataIntegrityViolationException e) {
             log.warn("Ошибка при добавлении оценки отзыву reviewId={}, userId={}", review.getReviewId(), user.getId());
         }
+        return false;
     }
 
     @Override
@@ -141,34 +142,33 @@ public class DbReviewStorage implements ReviewStorage {
 
     @Override
     public void deleteAllUserScoresFromReviews(User user) {
-        Map<Integer, List<Long>> scoreReviews = new HashMap<>();
+        Map<Long, Integer> scoreReviews = new HashMap<>();
         SqlHelper helperGetReviews = new SqlHelper();
         helperGetReviews.select(REVIEW_RATED_RATED, REVIEW_RATED_REVIEW_ID).from(REVIEW_RATED)
                 .where(REVIEW_RATED_USER_ID, user.getId());
         jdbcTemplate.query(helperGetReviews.toString(), (rs, rowNum) -> {
             long reviewId = rs.getLong(REVIEW_RATED_REVIEW_ID.name());
             int score = rs.getInt(REVIEW_RATED_RATED.name());
-            if (!scoreReviews.containsKey(score)) {
-                scoreReviews.put(score, new ArrayList<>());
-            }
-            scoreReviews.get(score).add(reviewId);
+            scoreReviews.put(reviewId, score);
             log.debug("Оценка отзыва со значением {} от пользователя id={} помечена на удаление", score, reviewId);
             return null;
         });
         if (!scoreReviews.isEmpty()) {
-            for (Map.Entry<Integer, List<Long>> entry : scoreReviews.entrySet()) {
-                SqlHelper helperUpdateRating = new SqlHelper();
-                int score = entry.getKey() * -1;
-                helperUpdateRating.update(REVIEW_RATING).withValue(String.format("%s + %s", REVIEW_RATING, score))
-                        .where(REVIEW_ID, entry.getValue());
-                jdbcTemplate.update(helperUpdateRating.toString());
-            }
-
+            SqlHelper helperUpdateRating = new SqlHelper();
+            helperUpdateRating.update(REVIEW_RATING).withValue(String.format("%s + ?", REVIEW_RATING))
+                    .where(REVIEW_ID, "?");
+            jdbcTemplate.batchUpdate(helperUpdateRating.toString(),
+                    scoreReviews.entrySet(),
+                    scoreReviews.size(),
+                    (ps, entry) -> {
+                        ps.setDouble(1, entry.getValue() * -1);
+                        ps.setLong(2, entry.getKey());
+                    }
+            );
             SqlHelper helperDelete = new SqlHelper();
             helperDelete.delete(REVIEW_RATED).where(REVIEW_RATED_USER_ID, user.getId());
             jdbcTemplate.update(helperDelete.toString());
-            log.debug("Отзывам с id={} удалён рейтинг от пользователя с id={}",
-                    scoreReviews.values().stream().flatMap(Collection::stream).collect(Collectors.toSet()), user.getId());
+            log.debug("Отзывам с id={} удалён рейтинг от пользователя с id={}", scoreReviews.keySet(), user.getId());
         }
     }
 

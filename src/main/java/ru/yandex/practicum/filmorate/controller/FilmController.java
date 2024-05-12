@@ -9,6 +9,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import java.util.Collection;
@@ -48,16 +50,19 @@ public class FilmController {
         return filmService.getAllFilms();
     }
 
-    @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Добавление лайка id={}, userId={}", id, userId);
-        filmService.addLike(id, userId);
+    @PutMapping("/{filmId}/mark/{userId}")
+    public void addMark(@PathVariable Long filmId, @PathVariable Long userId,
+                        @Min(value = 1, message = "Рейтинг оценки не может быть меньше 1")
+                        @Max(value = 10, message = "Рейтинг оценки не может быть больше 10")
+                        @RequestParam Integer rating) {
+        log.info("Добавление оценки id={}, userId={}, rating={}", filmId, userId, rating);
+        filmService.addMark(filmId, userId, rating);
     }
 
-    @DeleteMapping("/{id}/like/{userId}")
-    public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Удаление лайка id={}, userId={}", id, userId);
-        filmService.removeLike(id, userId);
+    @DeleteMapping("/{filmId}/mark/{userId}")
+    public void removeMark(@PathVariable Long filmId, @PathVariable Long userId) {
+        log.info("Удаление оценки filmId={}, userId={}", filmId, userId);
+        filmService.removeMark(filmId, userId);
     }
 
     @GetMapping("/popular")

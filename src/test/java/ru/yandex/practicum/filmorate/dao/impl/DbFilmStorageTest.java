@@ -147,28 +147,31 @@ class DbFilmStorageTest {
         final Film newFilm = filmService.addFilm(getNewFilledFilm());
 
         assertThrows(ItemNotFoundException.class,
-                () -> filmService.addLike(newFilm.getId(), TestUserUtils.getNewNonExistentUser().getId()));
+                () -> filmService.addMark(newFilm.getId(), TestUserUtils.getNewNonExistentUser().getId(), 10));
 
         final User newUser = userService.addUser(TestUserUtils.getNewUser());
 
         assertThrows(ItemNotFoundException.class,
-                () -> filmService.addLike(TestFilmUtils.getNonExistedFilm().getId(), newUser.getId()));
-        assertDoesNotThrow(() -> filmService.addLike(newFilm.getId(), newUser.getId()));
-        assertDoesNotThrow(() -> filmService.addLike(newFilm.getId(), newUser.getId()));
-        assertDoesNotThrow(() -> filmService.addLike(newFilm.getId(), newUser.getId()));
+                () -> filmService.addMark(TestFilmUtils.getNonExistedFilm().getId(), newUser.getId(), 10));
+        assertDoesNotThrow(() -> filmService.addMark(newFilm.getId(), newUser.getId(), 10));
+        assertDoesNotThrow(() -> filmService.addMark(newFilm.getId(), newUser.getId(), 5));
+        assertDoesNotThrow(() -> filmService.addMark(newFilm.getId(), newUser.getId(), 2));
+
+        assertEquals(10, filmStorage.get(newFilm.getId()).getRating());
 
         final User newUser2 = userService.addUser(TestUserUtils.getNewUser());
 
-        assertDoesNotThrow(() -> filmService.addLike(newFilm.getId(), newUser2.getId()));
+        assertDoesNotThrow(() -> filmService.addMark(newFilm.getId(), newUser2.getId(), 1));
 
-        assertEquals(2, filmStorage.getLikesCount(newFilm));
-        assertEquals(0, filmStorage.getLikesCount(TestFilmUtils.getNonExistedFilm()));
+        assertEquals(2, filmStorage.get(newFilm.getId()).getRatingCount());
+        assertEquals(5.5, filmStorage.get(newFilm.getId()).getRating());
 
         userService.deleteUser(newUser.getId());
         assertThrows(ItemNotFoundException.class, () -> userService.deleteUser(newUser.getId()));
         assertThrows(ItemNotFoundException.class, () -> userService.deleteUser(newUser.getId()));
 
-        assertEquals(1, filmStorage.getLikesCount(newFilm));
+        assertEquals(1, filmStorage.get(newFilm.getId()).getRating());
+        assertEquals(1, filmStorage.get(newFilm.getId()).getRatingCount());
     }
 
     @Test
@@ -176,16 +179,19 @@ class DbFilmStorageTest {
         final Film newFilm = filmService.addFilm(getNewFilledFilm());
         final User newUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmService.addLike(newFilm.getId(), newUser.getId());
+        filmService.addMark(newFilm.getId(), newUser.getId(), 10);
 
-        assertEquals(1, filmStorage.getLikesCount(newFilm));
-        assertThrows(ItemNotFoundException.class, () -> filmService.removeLike(newFilm.getId(), TestUserUtils.getNewNonExistentUser().getId()));
-        assertEquals(1, filmStorage.getLikesCount(newFilm));
+        assertEquals(10, filmStorage.get(newFilm.getId()).getRating());
+        assertEquals(1, filmStorage.get(newFilm.getId()).getRatingCount());
+        assertThrows(ItemNotFoundException.class, () -> filmService.removeMark(newFilm.getId(), TestUserUtils.getNewNonExistentUser().getId()));
+        assertEquals(10, filmStorage.get(newFilm.getId()).getRating());
+        assertEquals(1, filmStorage.get(newFilm.getId()).getRatingCount());
 
-        filmService.removeLike(newFilm.getId(), newUser.getId());
+        filmService.removeMark(newFilm.getId(), newUser.getId());
 
-        assertEquals(0, filmStorage.getLikesCount(newFilm));
-        assertThrows(ItemNotFoundException.class, () -> filmService.removeLike(TestFilmUtils.getNonExistedFilm().getId(), newUser.getId()));
+        assertEquals(0, filmStorage.get(newFilm.getId()).getRating());
+        assertEquals(0, filmStorage.get(newFilm.getId()).getRatingCount());
+        assertThrows(ItemNotFoundException.class, () -> filmService.removeMark(TestFilmUtils.getNonExistedFilm().getId(), newUser.getId()));
     }
 
     @Test
@@ -197,9 +203,9 @@ class DbFilmStorageTest {
         final User firstUser = userService.addUser(TestUserUtils.getNewUser());
         final User secondUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmService.addLike(secondFilm.getId(), firstUser.getId());
-        filmService.addLike(secondFilm.getId(), secondUser.getId());
-        filmService.addLike(firstFilm.getId(), secondUser.getId());
+        filmService.addMark(firstFilm.getId(), secondUser.getId(), 1);
+        filmService.addMark(firstFilm.getId(), secondUser.getId(), 10);
+        filmService.addMark(secondFilm.getId(), firstUser.getId(), 6);
 
         Collection<Film> popularByLikesMaxOne = filmService.getPopularByYearAndGenre(1, null, null);
 
@@ -235,9 +241,9 @@ class DbFilmStorageTest {
         final User firstUser = userService.addUser(TestUserUtils.getNewUser());
         final User secondUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmService.addLike(secondFilm.getId(), firstUser.getId());
-        filmService.addLike(secondFilm.getId(), secondUser.getId());
-        filmService.addLike(firstFilm.getId(), secondUser.getId());
+        filmService.addMark(secondFilm.getId(), firstUser.getId(), 10);
+        filmService.addMark(secondFilm.getId(), secondUser.getId(), 9);
+        filmService.addMark(firstFilm.getId(), secondUser.getId(), 1);
 
         assertThrows(ValidationException.class, () -> filmService.getSortedDirectorFilms(director.getId(), "unknown"));
 
@@ -250,8 +256,6 @@ class DbFilmStorageTest {
                 .stream().skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
 
         final Collection<Film> sortedByYearLikes = filmService.getSortedDirectorFilms(director.getId(), "likes");
-
-        int likesCount = filmStorage.getLikesCount(secondFilm);
 
         assertEquals(3, sortedByYearLikes.size());
         assertEquals(secondFilm, sortedByYearLikes
@@ -270,9 +274,9 @@ class DbFilmStorageTest {
         User firstUser = userService.addUser(TestUserUtils.getNewUser());
         User secondUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmService.addLike(thirdFilm.getId(), firstUser.getId());
-        filmService.addLike(secondFilm.getId(), firstUser.getId());
-        filmService.addLike(secondFilm.getId(), secondUser.getId());
+        filmService.addMark(thirdFilm.getId(), firstUser.getId(), 1);
+        filmService.addMark(secondFilm.getId(), firstUser.getId(), 10);
+        filmService.addMark(secondFilm.getId(), secondUser.getId(), 9);
 
         Collection<Film> searchByDirector = filmService.searchFilms("AaA", "director");
 

@@ -45,5 +45,7 @@ public class Film {
     @Builder.Default
     Set<Director> directors = new HashSet<>();
     @Builder.Default
-    Integer rating = 0;
+    Double rating = 0.0D;
+    @Builder.Default
+    Integer ratingCount = 0;
 }

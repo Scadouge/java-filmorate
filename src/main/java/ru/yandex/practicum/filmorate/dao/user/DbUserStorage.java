@@ -75,7 +75,7 @@ public class DbUserStorage implements UserStorage {
     @Override
     public User delete(User user) {
         log.debug("Удаление пользователя id={}", user.getId());
-        filmStorage.deleteAllUserLikesFromFilms(user);
+        filmStorage.deleteAllUserLikesMarksFilms(user);
         reviewStorage.deleteAllUserScoresFromReviews(user);
         SqlHelper helper = new SqlHelper();
         helper.delete(USERS).where(USER_ID, user.getId());
