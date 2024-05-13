@@ -8,7 +8,7 @@ public class TestReviewUtils {
     public static Review getNewNonExistentReview() {
         Random random = new Random();
         return Review.builder()
-                .reviewId(-9999L)
+                .id(-9999L)
                 .content(String.valueOf(random.nextInt(100)))
                 .isPositive(random.nextBoolean())
                 .userId((long) random.nextInt(20))

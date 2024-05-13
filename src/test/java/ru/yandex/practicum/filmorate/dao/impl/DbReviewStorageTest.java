@@ -60,13 +60,13 @@ class DbReviewStorageTest {
 
     @Test
     void testPutAndGetById() {
-        final Review savedReview = reviewStorage.get(firstReview.getReviewId());
+        final Review savedReview = reviewStorage.get(firstReview.getId());
 
         assertThat(savedReview)
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(firstReview);
-        assertThrows(ItemNotFoundException.class, () -> reviewStorage.get(TestReviewUtils.getNewNonExistentReview().getReviewId()));
+        assertThrows(ItemNotFoundException.class, () -> reviewStorage.get(TestReviewUtils.getNewNonExistentReview().getId()));
     }
 
     @Test
@@ -78,11 +78,11 @@ class DbReviewStorageTest {
 
     @Test
     void testUpdateReview() {
-        Review toUpdateReview = secondReview.toBuilder().reviewId(firstReview.getReviewId()).useful(firstReview.getUseful()).build();
+        Review toUpdateReview = secondReview.toBuilder().id(firstReview.getId()).useful(firstReview.getUseful()).build();
 
         reviewStorage.update(toUpdateReview);
 
-        final Review savedReview = reviewStorage.get(firstReview.getReviewId());
+        final Review savedReview = reviewStorage.get(firstReview.getId());
 
         assertThat(savedReview)
                 .isNotNull()
@@ -93,10 +93,10 @@ class DbReviewStorageTest {
 
     @Test
     void testDeleteReview() {
-        reviewStorage.get(firstReview.getReviewId());
+        reviewStorage.get(firstReview.getId());
         reviewStorage.delete(firstReview);
-        assertThrows(ItemNotFoundException.class, () -> reviewStorage.get(firstReview.getReviewId()));
-        assertThrows(ItemNotFoundException.class, () -> reviewStorage.get(TestReviewUtils.getNewNonExistentReview().getReviewId()));
+        assertThrows(ItemNotFoundException.class, () -> reviewStorage.get(firstReview.getId()));
+        assertThrows(ItemNotFoundException.class, () -> reviewStorage.get(TestReviewUtils.getNewNonExistentReview().getId()));
     }
 
     @Test
@@ -107,7 +107,7 @@ class DbReviewStorageTest {
         assertDoesNotThrow(() ->  reviewStorage.addLikeToReview(firstReview, user));
         assertDoesNotThrow(() ->  reviewStorage.addLikeToReview(firstReview, user));
         assertDoesNotThrow(() ->  reviewStorage.addLikeToReview(firstReview, user));
-        Review updatedReview = reviewStorage.get(firstReview.getReviewId());
+        Review updatedReview = reviewStorage.get(firstReview.getId());
         assertEquals(usefulBeforeLike + LIKE_VALUE, updatedReview.getUseful());
     }
 
@@ -118,28 +118,28 @@ class DbReviewStorageTest {
         assertDoesNotThrow(() ->  reviewStorage.addDislikeToReview(firstReview, user));
         assertDoesNotThrow(() ->  reviewStorage.addDislikeToReview(firstReview, user));
         assertDoesNotThrow(() ->  reviewStorage.addDislikeToReview(firstReview, user));
-        Review updatedReview = reviewStorage.get(firstReview.getReviewId());
+        Review updatedReview = reviewStorage.get(firstReview.getId());
         assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
 
         reviewStorage.deleteAllUserScoresFromReviews(firstReview, user);
         reviewStorage.addLikeToReview(firstReview, user);
-        assertEquals(usefulBeforeLike + LIKE_VALUE, reviewStorage.get(firstReview.getReviewId()).getUseful());
+        assertEquals(usefulBeforeLike + LIKE_VALUE, reviewStorage.get(firstReview.getId()).getUseful());
         User newUser = userStorage.put(TestUserUtils.getNewUser());
         reviewStorage.addLikeToReview(firstReview, newUser);
-        assertEquals(usefulBeforeLike + (LIKE_VALUE * 2), reviewStorage.get(firstReview.getReviewId()).getUseful());
+        assertEquals(usefulBeforeLike + (LIKE_VALUE * 2), reviewStorage.get(firstReview.getId()).getUseful());
         userStorage.delete(newUser);
-        assertEquals(usefulBeforeLike + LIKE_VALUE, reviewStorage.get(firstReview.getReviewId()).getUseful());
+        assertEquals(usefulBeforeLike + LIKE_VALUE, reviewStorage.get(firstReview.getId()).getUseful());
     }
 
     @Test
     void testDeleteLikeOrDislikeToReview() {
         Integer usefulBeforeLike = firstReview.getUseful();
         reviewStorage.addDislikeToReview(firstReview, user);
-        Review updatedReview = reviewStorage.get(firstReview.getReviewId());
+        Review updatedReview = reviewStorage.get(firstReview.getId());
         assertEquals(usefulBeforeLike + DISLIKE_VALUE, updatedReview.getUseful());
 
         reviewStorage.deleteAllUserScoresFromReviews(firstReview, user);
-        updatedReview = reviewStorage.get(firstReview.getReviewId());
+        updatedReview = reviewStorage.get(firstReview.getId());
         assertEquals(usefulBeforeLike, updatedReview.getUseful());
     }
 

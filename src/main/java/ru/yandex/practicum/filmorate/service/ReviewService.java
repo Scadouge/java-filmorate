@@ -24,7 +24,7 @@ public class ReviewService {
         userStorage.get(review.getUserId());
         filmStorage.get(review.getFilmId());
         Review newReview = reviewStorage.put(review);
-        eventService.createAddReviewEvent(review.getUserId(), newReview.getReviewId());
+        eventService.createAddReviewEvent(review.getUserId(), newReview.getId());
         return newReview;
     }
 
@@ -39,10 +39,10 @@ public class ReviewService {
     }
 
     public Review updateReview(Review review) {
-        log.info("Обновление отзыва review={}", review);
-        reviewStorage.get(review.getReviewId());
-        Long userId = review.getReviewId();
-        Long reviewId = review.getReviewId();
+        log.debug("Обновление отзыва review={}", review);
+        reviewStorage.get(review.getId());
+        Long userId = review.getId();
+        Long reviewId = review.getId();
         eventService.createUpdateReviewEvent(userId, reviewId);
         return reviewStorage.update(review);
     }

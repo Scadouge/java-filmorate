@@ -16,7 +16,7 @@ import javax.validation.constraints.NotNull;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Review {
     @EqualsAndHashCode.Include
-    Long reviewId;
+    Long id;
 
     @NotBlank(message = "Содержание отзыва не может отсутствовать")
     String content;

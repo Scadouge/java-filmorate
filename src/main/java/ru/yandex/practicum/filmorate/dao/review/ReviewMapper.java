@@ -13,7 +13,7 @@ public class ReviewMapper {
 
     public static Review createReview(ResultSet rs) throws SQLException {
         return Review.builder()
-                .reviewId(rs.getLong(REVIEW_ID.name()))
+                .id(rs.getLong(REVIEW_ID.name()))
                 .content(rs.getString(REVIEW_CONTENT.name()))
                 .isPositive(rs.getBoolean(REVIEW_IS_POSITIVE.name()))
                 .userId(rs.getLong(REVIEW_USER_ID.name()))
