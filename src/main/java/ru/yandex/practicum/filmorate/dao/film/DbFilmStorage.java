@@ -255,12 +255,28 @@ public class DbFilmStorage implements FilmStorage {
             return null;
         });
 
-        usersFilmsWithRatings.values().stream()
-                .forEach(map -> {
-                    map.keySet().stream().forEach(f -> FilmMapper.mapFilms(List.of(f),
-                                    getFilmGenreMapping(Set.of(f.getId())), getFilmDirectorMapping(Set.of(f.getId())))
-                            .stream().findFirst().orElseThrow(() -> new RuntimeException("Ошибка при маппинге фильма")));
-                });
+        List<Film> unfinishedFilms = new ArrayList<>(); // всп. лист для сохр. незавершенных фильмов
+
+        // заполняем всп. лист фильмами из хэшмапы
+        usersFilmsWithRatings.values().stream().forEach(map -> {
+            map.keySet().stream().forEach(unfinishedFilms::add);
+        });
+
+        // завершаем маппинг через всп. лист
+        Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
+        Set<Film> mappedFilms = FilmMapper
+                .mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
+
+        // заменяем фильмы в мапе на завершенные
+        usersFilmsWithRatings.replaceAll((k, v) -> {
+            HashMap<Film, Integer> rm = new HashMap<>();
+            v.entrySet().stream()
+                    .forEach(e -> rm.put(mappedFilms.stream()
+                            .filter(f -> f.getId().equals(e.getKey().getId()))
+                            .findFirst()
+                            .orElse(null), e.getValue()));
+            return rm;
+        });
 
         return usersFilmsWithRatings;
     }
