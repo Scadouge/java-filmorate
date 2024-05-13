@@ -258,8 +258,8 @@ public class DbFilmStorage implements FilmStorage {
         List<Film> unfinishedFilms = new ArrayList<>(); // всп. лист для сохр. незавершенных фильмов
 
         // заполняем всп. лист фильмами из хэшмапы
-        usersFilmsWithRatings.values().stream().forEach(map -> {
-            map.keySet().stream().forEach(unfinishedFilms::add);
+        usersFilmsWithRatings.values().forEach(map -> {
+            unfinishedFilms.addAll(map.keySet());
         });
 
         // завершаем маппинг через всп. лист
@@ -270,11 +270,10 @@ public class DbFilmStorage implements FilmStorage {
         // заменяем фильмы в мапе на завершенные
         usersFilmsWithRatings.replaceAll((k, v) -> {
             HashMap<Film, Integer> rm = new HashMap<>();
-            v.entrySet().stream()
-                    .forEach(e -> rm.put(mappedFilms.stream()
-                            .filter(f -> f.getId().equals(e.getKey().getId()))
-                            .findFirst()
-                            .orElse(null), e.getValue()));
+            v.forEach((key, value) -> rm.put(mappedFilms.stream()
+                    .filter(f -> f.getId().equals(key.getId()))
+                    .findFirst()
+                    .orElse(null), value));
             return rm;
         });
 
