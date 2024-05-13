@@ -17,7 +17,7 @@ import java.util.Set;
 
 import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.DIRECTOR_ID;
 import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.DIRECTOR_NAME;
-import static ru.yandex.practicum.filmorate.dao.SqlHelper.Table.DIRECTOR;
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Table.DIRECTORS;
 
 @Slf4j
 @Repository
@@ -28,7 +28,7 @@ public class DbDirectorStorage implements DirectorStorage {
     @Override
     public Director put(Director director) {
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
-        jdbcInsert.withTableName(DIRECTOR.name());
+        jdbcInsert.withTableName(DIRECTORS.name());
         jdbcInsert.usingGeneratedKeyColumns(DIRECTOR_ID.name());
         Map<String, Object> params = new HashMap<>();
         params.put(DIRECTOR_NAME.name(), director.getName());
@@ -43,7 +43,7 @@ public class DbDirectorStorage implements DirectorStorage {
         log.debug("Получение режиссера id={}", id);
         try {
             SqlHelper helper = new SqlHelper();
-            helper.select(DIRECTOR_ID, DIRECTOR_NAME).from(DIRECTOR).where(DIRECTOR_ID, id);
+            helper.select(DIRECTOR_ID, DIRECTOR_NAME).from(DIRECTORS).where(DIRECTOR_ID, id);
             return jdbcTemplate.queryForObject(helper.toString(), (rs, rowNum) -> DirectorMapper.createDirector(rs));
         } catch (EmptyResultDataAccessException e) {
             throw new ItemNotFoundException(id, String.format("Режиссер не найден id=%s", id));
@@ -54,7 +54,7 @@ public class DbDirectorStorage implements DirectorStorage {
     public Collection<Director> get(Set<Long> directorIds) {
         log.debug("Получение режиссеров directorIds={}", directorIds);
         SqlHelper helper = new SqlHelper();
-        helper.select(DIRECTOR_ID, DIRECTOR_NAME).from(DIRECTOR).where(DIRECTOR_ID, directorIds);
+        helper.select(DIRECTOR_ID, DIRECTOR_NAME).from(DIRECTORS).where(DIRECTOR_ID, directorIds);
         return jdbcTemplate.query(helper.toString(), (rs, rowNum) -> DirectorMapper.createDirector(rs));
     }
 
@@ -62,7 +62,7 @@ public class DbDirectorStorage implements DirectorStorage {
     public Collection<Director> getAll() {
         log.debug("Получение всех режиссеров");
         SqlHelper helper = new SqlHelper();
-        helper.select(DIRECTOR_ID, DIRECTOR_NAME).from(DIRECTOR);
+        helper.select(DIRECTOR_ID, DIRECTOR_NAME).from(DIRECTORS);
         return jdbcTemplate.query(helper.toString(), (rs, rowNum) -> DirectorMapper.createDirector(rs));
     }
 
@@ -79,7 +79,7 @@ public class DbDirectorStorage implements DirectorStorage {
     public Director delete(Director director) {
         log.debug("Удаление режиссера id={}", director.getId());
         SqlHelper helper = new SqlHelper();
-        helper.delete(DIRECTOR).where(DIRECTOR_ID, director.getId());
+        helper.delete(DIRECTORS).where(DIRECTOR_ID, director.getId());
         jdbcTemplate.update(helper.toString());
         return director;
     }

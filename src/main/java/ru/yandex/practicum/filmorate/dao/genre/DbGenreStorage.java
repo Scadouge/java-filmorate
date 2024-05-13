@@ -18,7 +18,7 @@ import java.util.Set;
 
 import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.GENRE_ID;
 import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.GENRE_NAME;
-import static ru.yandex.practicum.filmorate.dao.SqlHelper.Table.GENRE;
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Table.GENRES;
 
 @Slf4j
 @Repository
@@ -29,7 +29,7 @@ public class DbGenreStorage implements GenreStorage {
     @Override
     public Genre put(Genre genre) {
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
-        jdbcInsert.withTableName(GENRE.name());
+        jdbcInsert.withTableName(GENRES.name());
         jdbcInsert.usingGeneratedKeyColumns(GENRE_ID.name());
         Map<String, Object> params = new HashMap<>();
         params.put(GENRE_NAME.name(), genre.getName());
@@ -43,7 +43,7 @@ public class DbGenreStorage implements GenreStorage {
     public Genre get(Long id) {
         log.debug("Получение жанра id={}", id);
         SqlHelper helper = new SqlHelper();
-        helper.select(GENRE_ID, GENRE_NAME).from(GENRE).where(GENRE_ID, id);
+        helper.select(GENRE_ID, GENRE_NAME).from(GENRES).where(GENRE_ID, id);
         try {
             return jdbcTemplate.queryForObject(helper.toString(), (rs, rowNum) -> GenreMapper.createGenre(rs));
         } catch (EmptyResultDataAccessException e) {
@@ -55,7 +55,7 @@ public class DbGenreStorage implements GenreStorage {
     public Collection<Genre> get(Set<Long> genreIds) {
         log.debug("Получение жанров genreIds={}", genreIds);
         SqlHelper helper = new SqlHelper();
-        helper.select(GENRE_ID, GENRE_NAME).from(GENRE).where(GENRE_ID, genreIds);
+        helper.select(GENRE_ID, GENRE_NAME).from(GENRES).where(GENRE_ID, genreIds);
         return jdbcTemplate.query(helper.toString(), (rs, rowNum) -> GenreMapper.createGenre(rs));
     }
 
@@ -63,7 +63,7 @@ public class DbGenreStorage implements GenreStorage {
     public Collection<Genre> getAll() {
         log.debug("Получение всех жанров");
         SqlHelper helper = new SqlHelper();
-        helper.select(GENRE_ID, GENRE_NAME).from(GENRE);
+        helper.select(GENRE_ID, GENRE_NAME).from(GENRES);
         return jdbcTemplate.query(helper.toString(), (rs, rowNum) -> GenreMapper.createGenre(rs));
     }
 
@@ -80,7 +80,7 @@ public class DbGenreStorage implements GenreStorage {
     public Genre delete(Genre genre) {
         log.debug("Удаление жанра id={}", genre.getId());
         SqlHelper helper = new SqlHelper();
-        helper.delete(GENRE).where(GENRE_ID, genre.getId());
+        helper.delete(GENRES).where(GENRE_ID, genre.getId());
         jdbcTemplate.update(helper.toString());
         return genre;
     }

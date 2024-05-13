@@ -201,8 +201,8 @@ public class SqlHelper {
     @Getter
     @RequiredArgsConstructor
     public enum Field {
-        DIRECTOR_ID(Table.DIRECTOR),
-        DIRECTOR_NAME(Table.DIRECTOR),
+        DIRECTOR_ID(Table.DIRECTORS),
+        DIRECTOR_NAME(Table.DIRECTORS),
 
         EVENT_ID(Table.EVENTS),
         EVENT_USER_ID(Table.EVENTS),
@@ -230,8 +230,8 @@ public class SqlHelper {
         FRIENDSHIP_FRIEND_ID(Table.FRIENDSHIP),
         FRIENDSHIP_STATUS(Table.FRIENDSHIP),
 
-        GENRE_ID(Table.GENRE),
-        GENRE_NAME(Table.GENRE),
+        GENRE_ID(Table.GENRES),
+        GENRE_NAME(Table.GENRES),
 
         MARK_FILM_ID(Table.MARKS),
         MARK_USER_ID(Table.MARKS),
@@ -267,13 +267,13 @@ public class SqlHelper {
 
     @Getter
     public enum Table {
-        DIRECTOR,
+        DIRECTORS,
         EVENTS,
         FILM_DIRECTOR,
         FILM_GENRE,
         FILMS,
         FRIENDSHIP,
-        GENRE,
+        GENRES,
         MARKS,
         MPA,
         REVIEW_RATED,
