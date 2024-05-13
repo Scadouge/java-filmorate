@@ -74,9 +74,9 @@ public class SlopeOneTest {
         User firstUser = userService.addUser(TestUserUtils.getNewUser());
         User secondUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmService.addMark(firstFilm.getId(), firstUser.getId(), 5);
+        filmService.addMark(firstFilm.getId(), firstUser.getId(), 6);
         filmService.addMark(firstFilm.getId(), secondUser.getId(), 8);
-        filmService.addMark(secondFilm.getId(), secondUser.getId(), 5);
+        filmService.addMark(secondFilm.getId(), secondUser.getId(), 6);
 
         Collection<Film> rec = userService.getRecommendedFilms(firstUser.getId());
         assertThat(rec).isNotNull()
