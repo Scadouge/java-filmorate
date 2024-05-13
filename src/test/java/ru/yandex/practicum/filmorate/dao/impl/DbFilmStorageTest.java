@@ -1,25 +1,20 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.director.DbDirectorStorage;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dao.director.DirectorStorage;
-import ru.yandex.practicum.filmorate.dao.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
-import ru.yandex.practicum.filmorate.dao.genre.DbGenreStorage;
 import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
-import ru.yandex.practicum.filmorate.dao.mpa.DbMpaStorage;
 import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
-import ru.yandex.practicum.filmorate.dao.user.DbUserStorage;
-import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
 import utils.*;
 
 import java.time.LocalDate;
@@ -29,24 +24,17 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@JdbcTest
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class DbFilmStorageTest {
-    private final JdbcTemplate jdbcTemplate;
-    private FilmStorage filmStorage;
-    private UserStorage userStorage;
-    private GenreStorage genreStorage;
-    private MpaStorage mpaStorage;
-    private DirectorStorage directorStorage;
-
-    @BeforeEach
-    void setUp() {
-        genreStorage = new DbGenreStorage(jdbcTemplate);
-        mpaStorage = new DbMpaStorage(jdbcTemplate);
-        userStorage = new DbUserStorage(jdbcTemplate);
-        directorStorage = new DbDirectorStorage(jdbcTemplate);
-        filmStorage = new DbFilmStorage(jdbcTemplate, genreStorage, mpaStorage, directorStorage);
-    }
+    private final MpaStorage mpaStorage;
+    private final GenreStorage genreStorage;
+    private final DirectorStorage directorStorage;
+    private final FilmStorage filmStorage;
+    private final FilmService filmService;
+    private final UserService userService;
 
     private Film getNewFilledFilm() {
         return getNewFilledFilm(null);
@@ -95,18 +83,18 @@ class DbFilmStorageTest {
     void testPutFilm() {
         final Film newFilmWrongGenre = getNewFilledFilm().toBuilder()
                 .genres(Set.of(TestGenreUtils.getNewNonExistentGenre())).build();
-        assertThrows(ValidationException.class, () -> filmStorage.put(newFilmWrongGenre));
+        assertThrows(ValidationException.class, () -> filmService.addFilm(newFilmWrongGenre));
 
         final Film newFilmWrongMpa = getNewFilledFilm().toBuilder()
                 .mpa(TestMpaUtils.getNewNonExistentMpa()).build();
-        assertThrows(ValidationException.class, () -> filmStorage.put(newFilmWrongMpa));
+        assertThrows(ValidationException.class, () -> filmService.addFilm(newFilmWrongMpa));
     }
 
     @Test
     void testGetFilmById() {
-        final Film newFilm = filmStorage.put(getNewFilledFilm());
-        final Film savedFilm = filmStorage.get(newFilm.getId());
-        final Film newFilmWithoutMpa = filmStorage.put(getNewFilledFilm()
+        final Film newFilm = filmService.addFilm(getNewFilledFilm());
+        final Film savedFilm = filmService.getFilm(newFilm.getId());
+        final Film newFilmWithoutMpa = filmService.addFilm(getNewFilledFilm()
                 .toBuilder().genres(Set.of()).mpa(null).build());
 
         assertTrue(newFilmWithoutMpa.getGenres().isEmpty());
@@ -116,15 +104,15 @@ class DbFilmStorageTest {
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(newFilm);
-        assertThrows(ItemNotFoundException.class, () -> filmStorage.get(TestFilmUtils.getNonExistedFilm().getId()));
+        assertThrows(ItemNotFoundException.class, () -> filmService.getFilm(TestFilmUtils.getNonExistedFilm().getId()));
     }
 
     @Test
     void testGetAllFilms() {
-        final Film firstFilm = filmStorage.put(getNewFilledFilm());
-        final Film secondFilm = filmStorage.put(getNewFilledFilm());
+        final Film firstFilm = filmService.addFilm(getNewFilledFilm());
+        final Film secondFilm = filmService.addFilm(getNewFilledFilm());
 
-        Collection<Film> allFilms = filmStorage.getAll();
+        Collection<Film> allFilms = filmService.getAllFilms();
         assertTrue(allFilms.contains(firstFilm));
         assertTrue(allFilms.contains(secondFilm));
     }
@@ -132,85 +120,99 @@ class DbFilmStorageTest {
     @Test
     void testUpdateFilm() {
         final Film newFilm = getNewFilledFilm();
-        final Long newFilmId = filmStorage.put(newFilm).getId();
+        final Long newFilmId = filmService.addFilm(newFilm).getId();
         final Film toUpdateFilm = getNewFilledFilm(newFilmId);
-        filmStorage.update(toUpdateFilm);
+        filmService.updateFilm(toUpdateFilm);
 
-        final Film savedFilm = filmStorage.get(newFilmId);
+        final Film savedFilm = filmService.getFilm(newFilmId);
 
         assertThat(savedFilm)
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(toUpdateFilm);
-        assertThrows(ItemNotFoundException.class, () -> filmStorage.update(TestFilmUtils.getNonExistedFilm()));
+        assertThrows(ItemNotFoundException.class, () -> filmService.updateFilm(TestFilmUtils.getNonExistedFilm()));
     }
 
     @Test
     void testDeleteFilm() {
-        final Film newFilm = filmStorage.put(getNewFilledFilm());
-        filmStorage.get(newFilm.getId());
-        filmStorage.delete(newFilm);
-        assertThrows(ItemNotFoundException.class, () -> filmStorage.get(newFilm.getId()));
-        assertThrows(ItemNotFoundException.class, () -> filmStorage.get(TestFilmUtils.getNonExistedFilm().getId()));
+        final Film newFilm = filmService.addFilm(getNewFilledFilm());
+        filmService.getFilm(newFilm.getId());
+        filmService.deleteFilm(newFilm.getId());
+        assertThrows(ItemNotFoundException.class, () -> filmService.getFilm(newFilm.getId()));
+        assertThrows(ItemNotFoundException.class, () -> filmService.getFilm(TestFilmUtils.getNonExistedFilm().getId()));
     }
 
     @Test
     void testAddLike() {
-        final Film newFilm = filmStorage.put(getNewFilledFilm());
+        final Film newFilm = filmService.addFilm(getNewFilledFilm());
 
-        assertThrows(DataIntegrityViolationException.class,
-                () -> filmStorage.addLike(newFilm, TestUserUtils.getNewNonExistentUser()));
+        assertThrows(ItemNotFoundException.class,
+                () -> filmService.addMark(newFilm.getId(), TestUserUtils.getNewNonExistentUser().getId(), 10));
 
-        final User newUser = userStorage.put(TestUserUtils.getNewUser());
+        final User newUser = userService.addUser(TestUserUtils.getNewUser());
 
-        assertThrows(DataIntegrityViolationException.class,
-                () -> filmStorage.addLike(TestFilmUtils.getNonExistedFilm(), newUser));
-        assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
-        assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
-        assertDoesNotThrow(() -> filmStorage.addLike(newFilm, newUser));
+        assertThrows(ItemNotFoundException.class,
+                () -> filmService.addMark(TestFilmUtils.getNonExistedFilm().getId(), newUser.getId(), 10));
+        assertDoesNotThrow(() -> filmService.addMark(newFilm.getId(), newUser.getId(), 10));
+        assertDoesNotThrow(() -> filmService.addMark(newFilm.getId(), newUser.getId(), 5));
+        assertDoesNotThrow(() -> filmService.addMark(newFilm.getId(), newUser.getId(), 2));
 
-        final int likes = filmStorage.getLikesCount(newFilm);
+        assertEquals(10, filmStorage.get(newFilm.getId()).getRating());
 
-        assertEquals(0, filmStorage.getLikesCount(TestFilmUtils.getNonExistedFilm()));
-        assertEquals(1, likes);
+        final User newUser2 = userService.addUser(TestUserUtils.getNewUser());
+
+        assertDoesNotThrow(() -> filmService.addMark(newFilm.getId(), newUser2.getId(), 1));
+
+        assertEquals(2, filmStorage.get(newFilm.getId()).getRatingCount());
+        assertEquals(5.5, filmStorage.get(newFilm.getId()).getRating());
+
+        userService.deleteUser(newUser.getId());
+        assertThrows(ItemNotFoundException.class, () -> userService.deleteUser(newUser.getId()));
+        assertThrows(ItemNotFoundException.class, () -> userService.deleteUser(newUser.getId()));
+
+        assertEquals(1, filmStorage.get(newFilm.getId()).getRating());
+        assertEquals(1, filmStorage.get(newFilm.getId()).getRatingCount());
     }
 
     @Test
     void testRemoveLike() {
-        final Film newFilm = filmStorage.put(getNewFilledFilm());
-        final User newUser = userStorage.put(TestUserUtils.getNewUser());
+        final Film newFilm = filmService.addFilm(getNewFilledFilm());
+        final User newUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmStorage.addLike(newFilm, newUser);
+        filmService.addMark(newFilm.getId(), newUser.getId(), 10);
 
-        assertEquals(1, filmStorage.getLikesCount(newFilm));
-        assertDoesNotThrow(() -> filmStorage.removeLike(newFilm, TestUserUtils.getNewNonExistentUser()));
-        assertEquals(1, filmStorage.getLikesCount(newFilm));
+        assertEquals(10, filmStorage.get(newFilm.getId()).getRating());
+        assertEquals(1, filmStorage.get(newFilm.getId()).getRatingCount());
+        assertThrows(ItemNotFoundException.class, () -> filmService.removeMark(newFilm.getId(), TestUserUtils.getNewNonExistentUser().getId()));
+        assertEquals(10, filmStorage.get(newFilm.getId()).getRating());
+        assertEquals(1, filmStorage.get(newFilm.getId()).getRatingCount());
 
-        filmStorage.removeLike(newFilm, newUser);
+        filmService.removeMark(newFilm.getId(), newUser.getId());
 
-        assertEquals(0, filmStorage.getLikesCount(newFilm));
-        assertDoesNotThrow(() -> filmStorage.removeLike(TestFilmUtils.getNonExistedFilm(), newUser));
+        assertEquals(0, filmStorage.get(newFilm.getId()).getRating());
+        assertEquals(0, filmStorage.get(newFilm.getId()).getRatingCount());
+        assertThrows(ItemNotFoundException.class, () -> filmService.removeMark(TestFilmUtils.getNonExistedFilm().getId(), newUser.getId()));
     }
 
     @Test
     void testGetPopularByLikes() {
         Film firstFilm = getNewFilledFilm();
-        firstFilm = filmStorage.put(firstFilm);
+        firstFilm = filmService.addFilm(firstFilm);
         Film secondFilm = getNewFilledFilm().toBuilder().mpa(null).build();
-        secondFilm = filmStorage.put(secondFilm);
-        final User firstUser = userStorage.put(TestUserUtils.getNewUser());
-        final User secondUser = userStorage.put(TestUserUtils.getNewUser());
+        secondFilm = filmService.addFilm(secondFilm);
+        final User firstUser = userService.addUser(TestUserUtils.getNewUser());
+        final User secondUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmStorage.addLike(secondFilm, firstUser);
-        filmStorage.addLike(secondFilm, secondUser);
-        filmStorage.addLike(firstFilm, secondUser);
+        filmService.addMark(firstFilm.getId(), secondUser.getId(), 1);
+        filmService.addMark(firstFilm.getId(), secondUser.getId(), 10);
+        filmService.addMark(secondFilm.getId(), firstUser.getId(), 6);
 
-        Collection<Film> popularByLikesMaxOne = filmStorage.getPopularByYearAndGenre(1, null, null);
+        Collection<Film> popularByLikesMaxOne = filmService.getPopularByYearAndGenre(1, null, null);
 
         assertEquals(1, popularByLikesMaxOne.size());
         assertTrue(popularByLikesMaxOne.contains(secondFilm));
 
-        Collection<Film> popularByLikes = filmStorage.getPopularByYearAndGenre(10, null, null);
+        Collection<Film> popularByLikes = filmService.getPopularByYearAndGenre(10, null, null);
         Optional<Film> mostPopularFilm = popularByLikes.stream().findFirst();
         Optional<Film> almostPopularFilm = popularByLikes.stream().skip(1).findFirst();
 
@@ -226,26 +228,26 @@ class DbFilmStorageTest {
         final Director director = directorStorage.put(TestDirectorUtils.getNewDirector());
         Film firstFilm = getNewFilledFilm().toBuilder().genres(new HashSet<>()).directors(Set.of(director))
                 .releaseDate(LocalDate.of(1000, 1, 1)).build();
-        firstFilm = filmStorage.put(firstFilm);
+        firstFilm = filmService.addFilm(firstFilm);
         Film secondFilm = getNewFilledFilm().toBuilder().mpa(null).directors(Set.of(director))
                 .releaseDate(LocalDate.of(3000, 1, 1)).build();
-        secondFilm = filmStorage.put(secondFilm);
+        secondFilm = filmService.addFilm(secondFilm);
         Film thirdFilm = getNewFilledFilm().toBuilder().directors(Set.of(director))
                 .releaseDate(LocalDate.of(2000, 1, 1)).build();
-        thirdFilm = filmStorage.put(thirdFilm);
+        thirdFilm = filmService.addFilm(thirdFilm);
         Film fourthFilm = getNewFilledFilm().toBuilder().directors(Set.of())
                 .releaseDate(LocalDate.of(4000, 1, 1)).build();
-        fourthFilm = filmStorage.put(fourthFilm);
-        final User firstUser = userStorage.put(TestUserUtils.getNewUser());
-        final User secondUser = userStorage.put(TestUserUtils.getNewUser());
+        fourthFilm = filmService.addFilm(fourthFilm);
+        final User firstUser = userService.addUser(TestUserUtils.getNewUser());
+        final User secondUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmStorage.addLike(secondFilm, firstUser);
-        filmStorage.addLike(secondFilm, secondUser);
-        filmStorage.addLike(firstFilm, secondUser);
+        filmService.addMark(secondFilm.getId(), firstUser.getId(), 10);
+        filmService.addMark(secondFilm.getId(), secondUser.getId(), 9);
+        filmService.addMark(firstFilm.getId(), secondUser.getId(), 1);
 
-        assertThrows(ValidationException.class, () -> filmStorage.getSortedDirectorFilms(director, "unknown"));
+        assertThrows(ValidationException.class, () -> filmService.getSortedDirectorFilms(director.getId(), "unknown"));
 
-        final Collection<Film> sortedByYearFilms = filmStorage.getSortedDirectorFilms(director, "year");
+        final Collection<Film> sortedByYearFilms = filmService.getSortedDirectorFilms(director.getId(), "year");
 
         assertEquals(3, sortedByYearFilms.size());
         assertEquals(firstFilm, sortedByYearFilms
@@ -253,7 +255,7 @@ class DbFilmStorageTest {
         assertEquals(thirdFilm, sortedByYearFilms
                 .stream().skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
 
-        final Collection<Film> sortedByYearLikes = filmStorage.getSortedDirectorFilms(director, "likes");
+        final Collection<Film> sortedByYearLikes = filmService.getSortedDirectorFilms(director.getId(), "likes");
 
         assertEquals(3, sortedByYearLikes.size());
         assertEquals(secondFilm, sortedByYearLikes
@@ -266,27 +268,27 @@ class DbFilmStorageTest {
     void testSearchFilms() {
         Director firstDirector = directorStorage.put(TestDirectorUtils.getNewDirector().toBuilder().name("AAAATi").build());
         Director secondDirector = directorStorage.put(TestDirectorUtils.getNewDirector().toBuilder().name("00000").build());
-        Film firstFilm = filmStorage.put(getNewFilledFilm().toBuilder().name("TiTle").directors(Set.of(secondDirector)).build());
-        Film secondFilm = filmStorage.put(getNewFilledFilm().toBuilder().name("000").directors(Set.of(secondDirector)).build());
-        Film thirdFilm = filmStorage.put(getNewFilledFilm().toBuilder().directors(Set.of(firstDirector)).build());
-        User firstUser = userStorage.put(TestUserUtils.getNewUser());
-        User secondUser = userStorage.put(TestUserUtils.getNewUser());
+        Film firstFilm = filmService.addFilm(getNewFilledFilm().toBuilder().name("TiTle").directors(Set.of(secondDirector)).build());
+        Film secondFilm = filmService.addFilm(getNewFilledFilm().toBuilder().name("000").directors(Set.of(secondDirector)).build());
+        Film thirdFilm = filmService.addFilm(getNewFilledFilm().toBuilder().directors(Set.of(firstDirector)).build());
+        User firstUser = userService.addUser(TestUserUtils.getNewUser());
+        User secondUser = userService.addUser(TestUserUtils.getNewUser());
 
-        filmStorage.addLike(thirdFilm, firstUser);
-        filmStorage.addLike(secondFilm, firstUser);
-        filmStorage.addLike(secondFilm, secondUser);
+        filmService.addMark(thirdFilm.getId(), firstUser.getId(), 1);
+        filmService.addMark(secondFilm.getId(), firstUser.getId(), 10);
+        filmService.addMark(secondFilm.getId(), secondUser.getId(), 9);
 
-        Collection<Film> searchByDirector = filmStorage.searchFilms("AaA", "director");
+        Collection<Film> searchByDirector = filmService.searchFilms("AaA", "director");
 
         assertTrue(searchByDirector.contains(thirdFilm));
         assertEquals(1, searchByDirector.size());
 
-        Collection<Film> searchByTitle = filmStorage.searchFilms("ti", "title");
+        Collection<Film> searchByTitle = filmService.searchFilms("ti", "title");
 
         assertTrue(searchByTitle.contains(firstFilm));
         assertEquals(1, searchByDirector.size());
 
-        Collection<Film> searchByTitleAndDirector = filmStorage.searchFilms("ti", "title,director");
+        Collection<Film> searchByTitleAndDirector = filmService.searchFilms("ti", "title,director");
 
         assertTrue(searchByTitleAndDirector.contains(firstFilm));
         assertTrue(searchByTitleAndDirector.contains(thirdFilm));
@@ -296,7 +298,7 @@ class DbFilmStorageTest {
         assertEquals(firstFilm, searchByTitleAndDirector.stream()
                 .skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
 
-        Collection<Film> searchCrossedFilms = filmStorage.searchFilms("000", "title,director");
+        Collection<Film> searchCrossedFilms = filmService.searchFilms("000", "title,director");
 
         assertTrue(searchCrossedFilms.contains(secondFilm));
         assertTrue(searchCrossedFilms.contains(firstFilm));
@@ -306,16 +308,16 @@ class DbFilmStorageTest {
         assertEquals(firstFilm, searchCrossedFilms.stream()
                 .skip(1).findFirst().orElseThrow(() -> new RuntimeException("Фильм не найден")));
 
-        assertEquals(0, filmStorage.searchFilms("xxxxxx", "title,director").size());
-        assertEquals(0, filmStorage.searchFilms("xxxxxx", "director").size());
-        assertEquals(0, filmStorage.searchFilms("xxxxxx", "title").size());
+        assertEquals(0, filmService.searchFilms("xxxxxx", "title,director").size());
+        assertEquals(0, filmService.searchFilms("xxxxxx", "director").size());
+        assertEquals(0, filmService.searchFilms("xxxxxx", "title").size());
         assertThrows(ValidationException.class,
-                () -> filmStorage.searchFilms("xxxxxx", "").size());
+                () -> filmService.searchFilms("xxxxxx", "").size());
         assertThrows(ValidationException.class,
-                () -> filmStorage.searchFilms("gdrgsge", "grdsg, htfthfdht"));
+                () -> filmService.searchFilms("gdrgsge", "grdsg, htfthfdht"));
         assertThrows(ValidationException.class,
-                () -> filmStorage.searchFilms("gdrgsge", ",,,"));
-        assertDoesNotThrow(() -> filmStorage.searchFilms("", "title"));
+                () -> filmService.searchFilms("gdrgsge", ",,,"));
+        assertDoesNotThrow(() -> filmService.searchFilms("", "title"));
     }
 
     @Test
@@ -328,19 +330,19 @@ class DbFilmStorageTest {
         Film film3 = TestFilmUtils.getNewFilmWithGenreAndYear(genre1, "2010");
         Film film4 = TestFilmUtils.getNewFilmWithGenreAndYear(genre2, "2015");
 
-        filmStorage.put(film1);
-        filmStorage.put(film2);
-        filmStorage.put(film3);
-        filmStorage.put(film4);
+        filmService.addFilm(film1);
+        filmService.addFilm(film2);
+        filmService.addFilm(film3);
+        filmService.addFilm(film4);
 
         final Collection<Film> filteredByGenre =
-                filmStorage.getPopularByYearAndGenre(10, genre1.getId(), null);
+                filmService.getPopularByYearAndGenre(10, genre1.getId(), null);
         final Collection<Film> filteredByDate =
-                filmStorage.getPopularByYearAndGenre(10, null, "2010");
+                filmService.getPopularByYearAndGenre(10, null, "2010");
         final Collection<Film> filteredByGenreAndDate =
-                filmStorage.getPopularByYearAndGenre(10, genre2.getId(), "2015");
+                filmService.getPopularByYearAndGenre(10, genre2.getId(), "2015");
         final Collection<Film> withoutFilter =
-                filmStorage.getPopularByYearAndGenre(10, null, null);
+                filmService.getPopularByYearAndGenre(10, null, null);
 
         // Проверка filteredByGenre
         assertEquals(2, filteredByGenre.size());

@@ -9,11 +9,13 @@ import java.util.Collection;
 
 public interface ReviewStorage extends CrudStorage<Review> {
 
-    void addLikeToReview(Review review, User user);
+    boolean addLikeToReview(Review review, User user);
 
-    void addDislikeToReview(Review review, User user);
+    boolean addDislikeToReview(Review review, User user);
 
-    void deleteLikeOrDislikeFromReview(Review review, User user);
+    void deleteAllUserScoresFromReviews(Review review, User user);
+
+    void deleteAllUserScoresFromReviews(User user);
 
     Collection<Review> getAllReviewsByFilmId(Film film, int count);
 

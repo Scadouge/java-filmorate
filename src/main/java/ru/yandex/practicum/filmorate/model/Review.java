@@ -31,5 +31,5 @@ public class Review {
     Long filmId;
 
     @Builder.Default
-    Long useful = 0L;
+    Integer useful = 0;
 }

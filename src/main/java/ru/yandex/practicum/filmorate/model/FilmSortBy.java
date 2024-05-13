@@ -8,7 +8,7 @@ public enum FilmSortBy {
     public static FilmSortBy getSortBy(String sortBy) {
         try {
             return valueOf(sortBy.toUpperCase());
-        } catch (Throwable e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             return UNKNOWN;
         }
     }

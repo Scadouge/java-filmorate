@@ -6,17 +6,17 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 public interface FilmStorage extends CrudStorage<Film> {
-    void addLike(Film film, User user);
+    boolean addMark(Film film, User user, Integer rating);
 
-    void removeLike(Film film, User user);
+    boolean removeMark(Film film, User user);
+
+    void deleteAllUserLikesMarksFilms(User user);
 
     Collection<Film> getPopularByYearAndGenre(Integer count, Long genreId, String year);
-
-    int getLikesCount(Film film);
 
     Collection<Film> getCommonFilms(User user, User friend);
 
@@ -24,5 +24,5 @@ public interface FilmStorage extends CrudStorage<Film> {
 
     Collection<Film> searchFilms(String query, String by);
 
-    Map<Long, List<Film>> getLikedFilms();
+    Map<Long, HashMap<Film, Integer>> getLikedFilms();
 }

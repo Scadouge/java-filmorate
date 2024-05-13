@@ -10,7 +10,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -46,17 +46,20 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
-    public void addLike(Long filmId, Long userId) {
-        log.debug("Добавление лайка filmId={}, userId={}", filmId, userId);
-        filmStorage.addLike(filmStorage.get(filmId), userStorage.get(userId));
-        eventService.createAddLikeEvent(userId, filmId);
+    public void addMark(Long filmId, Long userId, Integer rating) {
+        log.debug("Добавление оценки id={}, userId={}, rating={}", filmId, userId, rating);
+        boolean success = filmStorage.addMark(filmStorage.get(filmId), userStorage.get(userId), rating);
+        if (success) {
+            eventService.createAddMarkEvent(userId, filmId);
+        }
     }
 
-
-    public void removeLike(Long filmId, Long userId) {
-        log.debug("Удаление лайка filmId={}, userId={}", filmId, userId);
-        filmStorage.removeLike(filmStorage.get(filmId), userStorage.get(userId));
-        eventService.createRemoveLikeEvent(userId, filmId);
+    public void removeMark(Long filmId, Long userId) {
+        log.debug("Удаление оценки id={}, userId={}", filmId, userId);
+        boolean success = filmStorage.removeMark(filmStorage.get(filmId), userStorage.get(userId));
+        if (success) {
+            eventService.createRemoveMarkEvent(userId, filmId);
+        }
     }
 
     public Collection<Film> getPopularByYearAndGenre(Integer count, Long genreId, String year) {
@@ -86,7 +89,7 @@ public class FilmService {
         return filmStorage.searchFilms(query, by);
     }
 
-    public Map<Long, List<Film>> getLikedFilms() {
+    public Map<Long, HashMap<Film, Integer>> getLikedFilms() {
         log.debug("Получение списка понравившихся фильмов для каждого пользователя");
         return filmStorage.getLikedFilms();
     }

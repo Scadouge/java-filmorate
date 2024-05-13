@@ -7,6 +7,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.SqlHelper;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -14,7 +15,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.GENRE_ID;
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Field.GENRE_NAME;
+import static ru.yandex.practicum.filmorate.dao.SqlHelper.Table.GENRE;
 
 @Slf4j
 @Repository
@@ -25,10 +29,10 @@ public class DbGenreStorage implements GenreStorage {
     @Override
     public Genre put(Genre genre) {
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
-        jdbcInsert.withTableName("genre");
-        jdbcInsert.usingGeneratedKeyColumns("genre_id");
+        jdbcInsert.withTableName(GENRE.name());
+        jdbcInsert.usingGeneratedKeyColumns(GENRE_ID.name());
         Map<String, Object> params = new HashMap<>();
-        params.put("name", genre.getName());
+        params.put(GENRE_NAME.name(), genre.getName());
         long id = jdbcInsert.executeAndReturnKey(params).longValue();
         Genre updatedGenre = genre.toBuilder().id(id).build();
         log.info("Добавление жанра genre={}", updatedGenre);
@@ -38,9 +42,10 @@ public class DbGenreStorage implements GenreStorage {
     @Override
     public Genre get(Long id) {
         log.debug("Получение жанра id={}", id);
-        String sql = "SELECT * FROM genre WHERE genre_id = ?";
+        SqlHelper helper = new SqlHelper();
+        helper.select(GENRE_ID, GENRE_NAME).from(GENRE).where(GENRE_ID, id);
         try {
-            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> GenreMapper.createGenre(rs), id);
+            return jdbcTemplate.queryForObject(helper.toString(), (rs, rowNum) -> GenreMapper.createGenre(rs));
         } catch (EmptyResultDataAccessException e) {
             throw new ItemNotFoundException(id, (String.format("Жанр не найден id= %s", id)));
         }
@@ -49,30 +54,34 @@ public class DbGenreStorage implements GenreStorage {
     @Override
     public Collection<Genre> get(Set<Long> genreIds) {
         log.debug("Получение жанров genreIds={}", genreIds);
-        String sql = String.format("SELECT * FROM genre WHERE genre_id IN (%s)",
-                String.join(",", genreIds.stream().map(String::valueOf).collect(Collectors.toSet())));
-        return jdbcTemplate.query(sql, (rs, rowNum) -> GenreMapper.createGenre(rs));
+        SqlHelper helper = new SqlHelper();
+        helper.select(GENRE_ID, GENRE_NAME).from(GENRE).where(GENRE_ID, genreIds);
+        return jdbcTemplate.query(helper.toString(), (rs, rowNum) -> GenreMapper.createGenre(rs));
     }
 
     @Override
     public Collection<Genre> getAll() {
         log.debug("Получение всех жанров");
-        String sql = "SELECT * FROM genre";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> GenreMapper.createGenre(rs));
+        SqlHelper helper = new SqlHelper();
+        helper.select(GENRE_ID, GENRE_NAME).from(GENRE);
+        return jdbcTemplate.query(helper.toString(), (rs, rowNum) -> GenreMapper.createGenre(rs));
     }
 
     @Override
     public Genre update(Genre genre) {
         log.debug("Обновление жанра genre={}", genre);
-        jdbcTemplate.update("UPDATE genre SET name = ? WHERE genre_id = ?",
-                genre.getName(), genre.getId());
+        SqlHelper helper = new SqlHelper();
+        helper.update(GENRE_NAME).where(GENRE_ID, genre.getId());
+        jdbcTemplate.update(helper.toString(), genre.getName());
         return get(genre.getId());
     }
 
     @Override
     public Genre delete(Genre genre) {
         log.debug("Удаление жанра id={}", genre.getId());
-        jdbcTemplate.update("DELETE FROM genre WHERE genre_id = ?", genre.getId());
+        SqlHelper helper = new SqlHelper();
+        helper.delete(GENRE).where(GENRE_ID, genre.getId());
+        jdbcTemplate.update(helper.toString());
         return genre;
     }
 }

@@ -66,7 +66,7 @@ public class ReviewService {
 
     public void deleteLikeOrDislikeFromReview(Long reviewId, Long userId) {
         log.debug("Удаление рейтинга отзыву с id={} от пользователя с id={}", reviewId, userId);
-        reviewStorage.deleteLikeOrDislikeFromReview(reviewStorage.get(reviewId), userStorage.get(userId));
+        reviewStorage.deleteAllUserScoresFromReviews(reviewStorage.get(reviewId), userStorage.get(userId));
     }
 
     public Collection<Review> getReviewsByFilmId(Long filmId, int count) {

@@ -25,16 +25,16 @@ public class EventService {
         return eventStorage.findAllById(userId);
     }
 
-    public void createAddLikeEvent(Long userId, Long filmId) {
-        Event event = createEvent(userId, filmId, EventType.LIKE, EventOperation.ADD);
+    public void createAddMarkEvent(Long userId, Long filmId) {
+        Event event = createEvent(userId, filmId, EventType.MARK, EventOperation.ADD);
         eventStorage.put(event);
-        log.debug("Событие: Пользователь с id={} поставил лайк фильму с id={}", userId, filmId);
+        log.debug("Событие: Пользователь с id={} поставил оценку фильму с id={}", userId, filmId);
     }
 
-    public void createRemoveLikeEvent(Long userId, Long filmId) {
-        Event event = createEvent(userId, filmId, EventType.LIKE, EventOperation.REMOVE);
+    public void createRemoveMarkEvent(Long userId, Long filmId) {
+        Event event = createEvent(userId, filmId, EventType.MARK, EventOperation.REMOVE);
         eventStorage.put(event);
-        log.debug("Событие: Пользователь с id={} убрал лайк с фильма с id={}", userId, filmId);
+        log.debug("Событие: Пользователь с id={} убрал оценку с фильма с id={}", userId, filmId);
     }
 
     public void createAddReviewEvent(Long userId, Long filmId) {

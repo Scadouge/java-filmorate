@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum EventType {
-    LIKE("LIKE"),
+    MARK("LIKE"),
     REVIEW("REVIEW"),
     FRIEND("FRIEND");
 
