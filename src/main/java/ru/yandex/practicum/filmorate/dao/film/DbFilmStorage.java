@@ -216,7 +216,7 @@ public class DbFilmStorage implements FilmStorage {
                 }
         );
         log.debug("Снижение рейтинга у фильмов filmIds={} из-за удаления пользователя userId={}",
-                    likedFilmsNewRating.keySet().stream().map(Film::getId).collect(Collectors.toSet()), user.getId());
+                likedFilmsNewRating.keySet().stream().map(Film::getId).collect(Collectors.toSet()), user.getId());
         if (!likedFilmsNewRating.isEmpty()) {
             SqlHelper helperUpdate = new SqlHelper();
             helperUpdate.update(FILM_RATING, FILM_RATING_COUNT)
@@ -238,29 +238,47 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Map<Long, List<Film>> getLikedFilms() {
+    public Map<Long, HashMap<Film, Integer>> getLikedFilms() {
         log.debug("Получение списка понравившихся фильмов для каждого пользователя");
-        Map<Long, List<Film>> usersFilms = new HashMap<>();
+        Map<Long, HashMap<Film, Integer>> usersFilmsWithRatings = new HashMap<>();
         SqlHelper helper = new SqlHelper();
         helper.select(List.of(FILMS, MARKS), MPA_NAME, MPA_DESCRIPTION);
         helper.from(MARKS);
         helper.leftJoin(FILM_ID, MARK_FILM_ID);
         helper.leftJoin(MPA_ID, FILM_MPA_ID);
         jdbcTemplate.query(helper.toString(), (rs, rowNum) -> {
-            if (!usersFilms.containsKey(rs.getLong(MARK_USER_ID.name()))) {
-                usersFilms.put(rs.getLong(MARK_USER_ID.name()), new ArrayList<>());
+            if (!usersFilmsWithRatings.containsKey(rs.getLong(MARK_USER_ID.name()))) {
+                usersFilmsWithRatings.put(rs.getLong(MARK_USER_ID.name()), new HashMap<>());
             }
-            usersFilms.get(rs.getLong(MARK_USER_ID.name())).add(FilmMapper.createFilm(rs).toBuilder().build());
+            usersFilmsWithRatings.get(rs.getLong(MARK_USER_ID.name()))
+                    .put(FilmMapper.createFilm(rs), rs.getInt(MARK_RATING.name()));
             return null;
         });
 
-        Set<Long> filmsId = usersFilms.values().stream()
-                .flatMap(films -> films.stream().map(Film::getId))
-                .collect(Collectors.toSet());
-        Map<Long, Set<Genre>> filmsGenres = getFilmGenreMapping(filmsId);
-        Map<Long, Set<Director>> filmsDirectors = getFilmDirectorMapping(filmsId);
-        usersFilms.replaceAll((k, v) -> new ArrayList<>(FilmMapper.mapFilms(usersFilms.get(k), filmsGenres, filmsDirectors)));
-        return usersFilms;
+        List<Film> unfinishedFilms = new ArrayList<>(); // всп. лист для сохр. незавершенных фильмов
+
+        // заполняем всп. лист фильмами из хэшмапы
+        usersFilmsWithRatings.values().stream().forEach(map -> {
+            map.keySet().stream().forEach(unfinishedFilms::add);
+        });
+
+        // завершаем маппинг через всп. лист
+        Set<Long> filmIds = unfinishedFilms.stream().map(Film::getId).collect(Collectors.toSet());
+        Set<Film> mappedFilms = FilmMapper
+                .mapFilms(unfinishedFilms, getFilmGenreMapping(filmIds), getFilmDirectorMapping(filmIds));
+
+        // заменяем фильмы в мапе на завершенные
+        usersFilmsWithRatings.replaceAll((k, v) -> {
+            HashMap<Film, Integer> rm = new HashMap<>();
+            v.entrySet().stream()
+                    .forEach(e -> rm.put(mappedFilms.stream()
+                            .filter(f -> f.getId().equals(e.getKey().getId()))
+                            .findFirst()
+                            .orElse(null), e.getValue()));
+            return rm;
+        });
+
+        return usersFilmsWithRatings;
     }
 
     @Override
