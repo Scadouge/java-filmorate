@@ -3,9 +3,9 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 import ru.yandex.practicum.filmorate.validation.ValidDate;
+import ru.yandex.practicum.filmorate.validation.ValidFilmDirectors;
 import ru.yandex.practicum.filmorate.validation.ValidFilmGenres;
 import ru.yandex.practicum.filmorate.validation.ValidFilmMpa;
 
@@ -37,9 +37,15 @@ public class Film {
     @Positive(message = "Продолжительность должна быть положительной")
     Integer duration;
     @ValidFilmGenres(message = "У жанра отсутствует id")
-    @NonFinal
     @Builder.Default
     Set<Genre> genres = new HashSet<>();
     @ValidFilmMpa(message = "У рейтинга mpa отсутствует id")
     Mpa mpa;
+    @ValidFilmDirectors(message = "У режиссера отсутствует id")
+    @Builder.Default
+    Set<Director> directors = new HashSet<>();
+    @Builder.Default
+    Double rating = 0.0D;
+    @Builder.Default
+    Integer ratingCount = 0;
 }

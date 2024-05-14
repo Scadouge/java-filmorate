@@ -15,12 +15,12 @@ public class MpaService {
     private final MpaStorage mpaStorage;
 
     public Collection<Mpa> getAllMpa() {
-        log.info("Получение списка всех Mpa");
+        log.debug("Получение списка всех Mpa");
         return mpaStorage.getAll();
     }
 
     public Mpa getMpa(Long id) {
-        log.info("Получение Mpa id={}", id);
+        log.debug("Получение Mpa id={}", id);
         return mpaStorage.get(id);
     }
 }

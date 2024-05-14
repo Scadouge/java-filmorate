@@ -15,12 +15,12 @@ public class GenreService {
     private final GenreStorage genreStorage;
 
     public Collection<Genre> getAllGenres() {
-        log.info("Получение всех жанров");
+        log.debug("Получение всех жанров");
         return genreStorage.getAll();
     }
 
     public Genre getGenre(Long id) {
-        log.info("Получение жанра id={}", id);
+        log.debug("Получение жанра id={}", id);
         return genreStorage.get(id);
     }
 }
