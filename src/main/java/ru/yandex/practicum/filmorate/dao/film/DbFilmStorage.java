@@ -126,7 +126,7 @@ public class DbFilmStorage implements FilmStorage {
         return film;
     }
 
-    public static double calculateRating(double oldRating, int oldCount, int newCount, int userRating) {
+    private double calculateRating(double oldRating, int oldCount, int newCount, int userRating) {
         if (newCount == 0) {
             return 0;
         } else {
@@ -134,7 +134,7 @@ public class DbFilmStorage implements FilmStorage {
         }
     }
 
-    public int getUserMark(Film film, User user) {
+    private int getUserMark(Film film, User user) {
         SqlHelper helper = new SqlHelper();
         helper.select(MARK_RATING).from(MARKS).where(MARK_FILM_ID, film.getId()).and(MARK_USER_ID, user.getId());
         try {
